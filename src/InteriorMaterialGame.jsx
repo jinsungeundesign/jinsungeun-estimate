@@ -446,7 +446,17 @@ const PROFILES = [
 const SINK_STEP_IDS = new Set(["kitchen_cabinet", "kitchen_countertop"]);
 
 // 시공사 기업이윤 — 공사비 소계에 할증해서 최종 견적을 낸다
-const PROFIT_RATE = 0.2;
+// 공사 규모가 작을수록 현장관리·보험 같은 고정비 비중이 커서 이윤율을 높게 잡는다.
+// 기준 금액은 공사비 소계(만원).
+const PROFIT_TIERS = [
+  { under: 6000, rate: 0.27 },
+  { under: 8000, rate: 0.23 },
+  { under: Infinity, rate: 0.2 },
+];
+
+function profitRateFor(subtotal) {
+  return PROFIT_TIERS.find((t) => subtotal < t.under).rate;
+}
 
 // 욕실 기구(변기·세면대·수전 등) 설치비 — 선택 항목이 아니라 욕실 개수만큼 견적에 자동 반영
 const BATH_FIXTURE_INSTALL = { name: "욕실 기구 설치비", perRoom: 30, detail: "변기·세면대·수전 등 설치비 · 욕실 1칸당 30만원" };
@@ -1114,13 +1124,20 @@ export default function InteriorMaterialGame() {
   totalHi += bathInstallTotal;
 
   // 공사비 소계에 기업이윤을 할증해 최종 견적을 만든다
-  const profitLo = totalLo * PROFIT_RATE, profitHi = totalHi * PROFIT_RATE;
+  // 하한·상한이 서로 다른 구간에 걸칠 수 있어 각각의 요율을 적용한다
+  const rateLo = profitRateFor(totalLo);
+  const rateHi = profitRateFor(totalHi);
+  const profitLo = totalLo * rateLo, profitHi = totalHi * rateHi;
   const grandLo = totalLo + profitLo, grandHi = totalHi + profitHi;
   const won = (n) => Math.round(n).toLocaleString();
 
   // 하이엔드는 인건비·마감 노무비 편차가 커서 상한선이 의미가 없다.
   // 최소 이만큼은 들어간다는 하한선만 보여준다.
   const minOnly = profile?.id === "highend";
+  // 하이엔드는 하한선만 쓰므로 요율도 하나만 표시한다
+  const pct = (r) => `${Math.round(r * 100)}%`;
+  const profitPct =
+    minOnly || rateLo === rateHi ? pct(rateLo) : `${Math.round(rateHi * 100)}~${pct(rateLo)}`;
   const amount = (lo, hi) => (minOnly ? `${won(lo)}만원 이상` : `${won(lo)}~${won(hi)}만원`);
 
   // multi 타입 선택을 자재리스트/견적서에서 항목별로 펼쳐 보여주기 위한 평탄화
@@ -1550,7 +1567,7 @@ export default function InteriorMaterialGame() {
                 <span className="font-mono text-stone-200">{amount(totalLo, totalHi)}</span>
               </div>
               <div className="flex items-baseline justify-between text-xs">
-                <span className="text-stone-400">기업이윤·제경비 ({Math.round(PROFIT_RATE * 100)}%)</span>
+                <span className="text-stone-400">기업이윤·제경비 ({profitPct})</span>
                 <span className="font-mono text-stone-200">{amount(profitLo, profitHi)}</span>
               </div>
               <div className="text-[10px] text-stone-500 leading-relaxed">
