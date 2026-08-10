@@ -379,8 +379,8 @@ const STEPS = [
     ]},
   { id: "grout", name: "[욕실] 메지", icon: ShowerHead, type: "multi", question: "타일 줄눈(메지)은 어떤 걸로 할까요?",
     items: [
-      { name: "일반메지", price: "15~20만원", detail: "폴리우레아", image: GROUT_NORMAL_IMG },
-      { name: "케라폭시", price: "30~40만원", detail: "반영구, 내화학성 우수", image: GROUT_KERAPOXY_IMG },
+      { name: "일반메지", price: "15~20만원", detail: "컬러 그라우트", image: GROUT_NORMAL_IMG },
+      { name: "케라폭시", price: "40~55만원", detail: "욕실 바닥만 시공 기준 · 반영구, 내화학성 우수", image: GROUT_KERAPOXY_IMG },
     ]},
   { id: "towel_bar", name: "[욕실] 수건걸이", icon: ShowerHead, type: "multi", question: "수건걸이는 어떤 브랜드로 할까요?", note: "물류·시공 별도 기준",
     items: [
