@@ -700,6 +700,15 @@ export default function InteriorMaterialGame() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  // 로그인이 끝나면 로그인 화면을 닫고 원래 보던 견적으로 돌아간다
+  useEffect(() => {
+    if (user) {
+      setShowAuthBox(false);
+      setAuthSent(false);
+      setAuthError("");
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!supabase) return;
     const url = import.meta.env.VITE_SUPABASE_URL;
@@ -1683,72 +1692,6 @@ export default function InteriorMaterialGame() {
             )}
           </div>
 
-          {showAuthBox && !user && (
-            <div className="mt-4 border border-stone-200 rounded-xl p-4 no-print">
-              <div className="text-sm font-medium mb-2">간편 로그인</div>
-              {(enabledProviders.google || enabledProviders.kakao || enabledProviders.naver) && (
-                <div className="space-y-2 mb-4">
-                  {enabledProviders.google && (
-                    <button
-                      onClick={() => signInWithProvider("google")}
-                      className="w-full flex items-center justify-center gap-2 border border-stone-200 text-stone-700 text-sm font-medium py-2.5 rounded-full"
-                    >
-                      구글로 로그인
-                    </button>
-                  )}
-                  {enabledProviders.kakao && (
-                    <button
-                      onClick={() => signInWithProvider("kakao")}
-                      className="w-full flex items-center justify-center gap-2 bg-[#FEE500] text-stone-900 text-sm font-medium py-2.5 rounded-full"
-                    >
-                      카카오로 로그인
-                    </button>
-                  )}
-                  {enabledProviders.naver && (
-                    <button
-                      onClick={() => signInWithProvider("naver")}
-                      className="w-full flex items-center justify-center gap-2 bg-[#03C75A] text-white text-sm font-medium py-2.5 rounded-full"
-                    >
-                      네이버로 로그인
-                    </button>
-                  )}
-                </div>
-              )}
-              {authError && (
-                <div className="text-[11px] text-stone-600 bg-stone-100 rounded-lg px-3 py-2 mb-3 leading-relaxed">
-                  로그인에 실패했어요: {authError}
-                </div>
-              )}
-              <div className="text-[11px] text-stone-400 mb-2">
-                {enabledProviders.google || enabledProviders.kakao || enabledProviders.naver
-                  ? "또는 이메일로 로그인"
-                  : "이메일로 로그인 링크를 받으세요"}
-              </div>
-              {authSent ? (
-                <p className="text-xs text-teal-700">
-                  {authEmail}로 로그인 링크를 보냈어요. 메일함을 확인해주세요.
-                </p>
-              ) : (
-                <>
-                  <input
-                    type="email"
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    placeholder="이메일 주소"
-                    className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm mb-2"
-                  />
-                  <button
-                    onClick={sendMagicLink}
-                    disabled={!authEmail}
-                    className="w-full bg-stone-900 text-white text-sm font-medium py-2.5 rounded-full disabled:bg-stone-200"
-                  >
-                    로그인 링크 받기
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-
           <div className="flex items-center justify-center gap-4 mt-6 no-print">
             <button onClick={goPrev} className="flex items-center gap-1 text-sm text-stone-400">
               <ChevronLeft className="w-4 h-4" /> 선택으로 돌아가기
@@ -1762,6 +1705,97 @@ export default function InteriorMaterialGame() {
           <div className="flex items-center justify-center gap-1.5 mt-8 pt-4 border-t border-stone-200">
             <img src={LOGO_SRC} alt="logo" className="w-4 h-4 object-contain opacity-70" />
             <span className="text-[11px] text-stone-400">진성은디자인</span>
+          </div>
+        </div>
+      )}
+
+      {showAuthBox && !user && (
+        <div className="fixed inset-0 bg-stone-50 z-50 overflow-auto no-print">
+          <div className="max-w-md mx-auto px-5 py-8 min-h-full flex flex-col">
+            <button
+              onClick={() => { setShowAuthBox(false); setAuthError(""); }}
+              className="flex items-center gap-1 text-sm text-stone-400 mb-8 self-start"
+            >
+              <ChevronLeft className="w-4 h-4" /> 견적으로 돌아가기
+            </button>
+
+            <div className="flex items-center gap-2 mb-2">
+              <img src={LOGO_SRC} alt="" className="w-7 h-7 object-contain" />
+              <span className="text-lg font-bold tracking-tight">로그인</span>
+            </div>
+            <p className="text-sm text-stone-500 leading-relaxed mb-8">
+              견적서를 저장하거나 업체에 자재리스트를 보내려면 로그인이 필요해요.
+              <br />
+              <b className="text-stone-700">지금까지 고른 내용은 그대로 유지</b>됩니다.
+            </p>
+
+            {(enabledProviders.google || enabledProviders.kakao || enabledProviders.naver) && (
+              <div className="space-y-2 mb-6">
+                {enabledProviders.google && (
+                  <button
+                    onClick={() => signInWithProvider("google")}
+                    className="w-full flex items-center justify-center gap-2 border border-stone-300 text-stone-700 text-sm font-medium py-3.5 rounded-full"
+                  >
+                    구글로 로그인
+                  </button>
+                )}
+                {enabledProviders.kakao && (
+                  <button
+                    onClick={() => signInWithProvider("kakao")}
+                    className="w-full flex items-center justify-center gap-2 bg-[#FEE500] text-stone-900 text-sm font-medium py-3.5 rounded-full"
+                  >
+                    카카오로 로그인
+                  </button>
+                )}
+                {enabledProviders.naver && (
+                  <button
+                    onClick={() => signInWithProvider("naver")}
+                    className="w-full flex items-center justify-center gap-2 bg-[#03C75A] text-white text-sm font-medium py-3.5 rounded-full"
+                  >
+                    네이버로 로그인
+                  </button>
+                )}
+              </div>
+            )}
+
+            {authError && (
+              <div className="text-xs text-stone-600 bg-stone-100 rounded-lg px-3 py-2.5 mb-4 leading-relaxed">
+                로그인에 실패했어요: {authError}
+              </div>
+            )}
+
+            <div className="text-xs text-stone-400 mb-3">
+              {enabledProviders.google || enabledProviders.kakao || enabledProviders.naver
+                ? "또는 이메일로 로그인"
+                : "이메일로 로그인 링크를 받으세요"}
+            </div>
+            {authSent ? (
+              <div className="bg-teal-50 border border-teal-100 rounded-xl px-4 py-3.5">
+                <p className="text-sm text-teal-800 leading-relaxed">
+                  <b>{authEmail}</b>로 로그인 링크를 보냈어요.
+                  <br />
+                  메일함을 열어 링크를 눌러주세요.
+                </p>
+              </div>
+            ) : (
+              <>
+                <input
+                  type="email"
+                  inputMode="email"
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  placeholder="이메일 주소"
+                  className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm mb-2"
+                />
+                <button
+                  onClick={sendMagicLink}
+                  disabled={!authEmail}
+                  className="w-full bg-stone-900 text-white text-sm font-medium py-3.5 rounded-full disabled:bg-stone-200 disabled:text-stone-400"
+                >
+                  로그인 링크 받기
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
