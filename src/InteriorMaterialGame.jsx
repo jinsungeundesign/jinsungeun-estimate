@@ -518,6 +518,42 @@ const PROFILE_DEPENDENT_STEP_IDS = STEPS.filter((s) => s.itemsByProfile).map((s)
 
 const STEP_BY_ID = new Map(STEPS.map((s) => [s.id, s]));
 
+// 선택 내역은 이름과 개수만 저장한다. 항목 객체를 통째로 저장하면 이미지(base64)까지 들어가
+// 용량이 커지고, 나중에 단가를 고쳐도 저장해둔 옛 금액이 계속 따라다니기 때문.
+const STORAGE_KEY = "jinsungeun-estimate-v1";
+
+function compactSelections(selections) {
+  const out = {};
+  Object.entries(selections).forEach(([stepId, val]) => {
+    const pick = (i) => (i.count > 1 ? { name: i.name, count: i.count } : { name: i.name });
+    out[stepId] = Array.isArray(val) ? val.map(pick) : pick(val);
+  });
+  return out;
+}
+
+function expandSelections(compact, profileId) {
+  const out = {};
+  if (!compact) return out;
+  Object.entries(compact).forEach(([stepId, val]) => {
+    const step = STEP_BY_ID.get(stepId);
+    if (!step) return;
+    const items = stepItems(step, profileId);
+    const find = (saved) => {
+      const item = items.find((i) => i.name === saved.name);
+      if (!item) return null;
+      return saved.count > 1 ? { ...item, count: saved.count } : item;
+    };
+    if (Array.isArray(val)) {
+      const list = val.map(find).filter(Boolean);
+      if (list.length) out[stepId] = list;
+    } else {
+      const item = find(val);
+      if (item) out[stepId] = item;
+    }
+  });
+  return out;
+}
+
 function defaultIndexFor(step, profileId) {
   if (!profileId || !step) return null;
   const items = stepItems(step, profileId);
@@ -545,6 +581,48 @@ export default function InteriorMaterialGame() {
   const [detailItem, setDetailItem] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
   const [shared, setShared] = useState(false);
+  // 복원이 끝나기 전에는 저장하지 않는다 (빈 상태로 덮어쓰는 것을 막기 위해)
+  const [restored, setRestored] = useState(false);
+  const [pdfStatus, setPdfStatus] = useState(""); // "", "making", "done", "error"
+  const [shareText, setShareText] = useState(null); // 공유 내용 미리보기
+
+  // 새로고침이나 소셜 로그인(페이지가 통째로 다시 열림) 후에도 진행하던 견적을 그대로 이어간다
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (saved) {
+        const matched = PROFILES.find((p) => p.id === saved.profileId) || null;
+        setPhase(saved.phase || "pyeong");
+        setPyeong(saved.pyeong || "");
+        setBathroomCount(saved.bathroomCount || "1");
+        setProfile(matched);
+        setStepIdx(saved.stepIdx || 0);
+        setSelections(expandSelections(saved.selections, matched?.id));
+      }
+    } catch {
+      // 저장된 값이 깨졌으면 그냥 처음부터 시작한다
+    }
+    setRestored(true);
+  }, []);
+
+  useEffect(() => {
+    if (!restored) return;
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          phase,
+          pyeong,
+          bathroomCount,
+          profileId: profile?.id || null,
+          stepIdx,
+          selections: compactSelections(selections),
+        })
+      );
+    } catch {
+      // 저장 공간이 꽉 찼더라도 앱은 계속 동작해야 한다
+    }
+  }, [restored, phase, pyeong, bathroomCount, profile, stepIdx, selections]);
 
   // ---- 로그인 / 저장 ----
   const [user, setUser] = useState(null);
@@ -633,7 +711,7 @@ export default function InteriorMaterialGame() {
         pyeong,
         bathroom_count: Number(bathroomCount) || 1,
         profile_name: profile?.name || null,
-        selections,
+        selections: compactSelections(selections),
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" }
@@ -681,6 +759,7 @@ export default function InteriorMaterialGame() {
       return;
     }
     const text = buildMaterialText();
+    // 휴대폰이면 카톡·메일 등을 고르는 공유창을 바로 띄운다
     if (navigator.share) {
       try {
         await navigator.share({ title: "진성은디자인 자재리스트", text });
@@ -690,12 +769,60 @@ export default function InteriorMaterialGame() {
         if (e.name === "AbortError") return; // 사용자가 공유창을 닫은 것뿐
       }
     }
+    // PC에는 공유창이 없으므로 내용을 눈으로 확인하고 복사할 수 있게 보여준다
+    setShareText(text);
     setShared(await copyText(text));
   }
 
-  // 금액이 들어간 견적서는 인쇄 대화상자에서 "PDF로 저장"을 쓴다 (별도 라이브러리 불필요)
-  function saveEstimate() {
-    window.print();
+  // 금액이 들어간 견적서를 PDF 파일로 바로 내려받는다.
+  // 라이브러리는 무거워서 버튼을 누른 순간에만 불러온다(초기 로딩 속도 유지).
+  async function saveEstimate() {
+    const sheet = document.getElementById("estimate-sheet");
+    if (!sheet) return;
+    setPdfStatus("making");
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const canvas = await html2canvas(sheet, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+
+      const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const imgW = pageW - margin * 2;
+      const imgH = (canvas.height * imgW) / canvas.width;
+
+      // 내용이 A4 한 장을 넘으면 페이지를 나눠 이어 붙인다
+      let remaining = imgH;
+      let offset = 0;
+      while (remaining > 0) {
+        pdf.addImage(
+          canvas.toDataURL("image/jpeg", 0.92),
+          "JPEG",
+          margin,
+          margin - offset,
+          imgW,
+          imgH
+        );
+        remaining -= pageH - margin * 2;
+        offset += pageH - margin * 2;
+        if (remaining > 0) pdf.addPage();
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      pdf.save(`진성은디자인_견적서_${pyeong}평_${today}.pdf`);
+      setPdfStatus("done");
+      setTimeout(() => setPdfStatus(""), 2500);
+    } catch (e) {
+      console.error(e);
+      setPdfStatus("error");
+    }
   }
 
   async function loadFromCloud() {
@@ -710,7 +837,7 @@ export default function InteriorMaterialGame() {
       setBathroomCount(String(data.bathroom_count || 1));
       const matched = PROFILES.find((p) => p.name === data.profile_name);
       if (matched) setProfile(matched);
-      setSelections(data.selections || {});
+      setSelections(expandSelections(data.selections, matched?.id));
       setHasSavedRemote(true);
       setPhase("summary");
       setStepIdx(STEPS.length - 1);
@@ -1270,9 +1397,13 @@ export default function InteriorMaterialGame() {
             ))}
           </div>
 
+          <div id="estimate-sheet" className="bg-stone-50 pt-1">
           <div className="flex items-center gap-1.5 mb-3">
             <Receipt className="w-4 h-4 text-teal-700" />
             <h2 className="text-sm font-bold text-stone-500 tracking-wide">견적서</h2>
+          </div>
+          <div className="text-[11px] text-stone-400 mb-3">
+            {pyeong}평(전용) · 욕실 {bathroomCount}개 · {profile?.name}
           </div>
           <div className="bg-stone-900 text-white rounded-2xl p-4 mb-3 print-plain print-row">
             <div className="space-y-1.5 pb-3 mb-3 border-b border-white/10">
@@ -1333,14 +1464,22 @@ export default function InteriorMaterialGame() {
               <div className="text-xs font-mono text-teal-700">{bathInstallTotal}만원</div>
             </div>
           </div>
+          </div>
 
           <div className="space-y-2 no-print">
             <button
               onClick={saveEstimate}
-              className="w-full flex items-center justify-center gap-2 bg-stone-900 text-white text-sm font-medium py-3.5 rounded-full"
+              disabled={pdfStatus === "making"}
+              className="w-full flex items-center justify-center gap-2 bg-stone-900 text-white text-sm font-medium py-3.5 rounded-full disabled:opacity-60"
             >
               <FileDown className="w-4 h-4" />
-              내 견적서 저장 (본인 보관용, 업체 공유금지)
+              {pdfStatus === "making"
+                ? "PDF 만드는 중..."
+                : pdfStatus === "done"
+                ? "PDF 저장 완료 ✓"
+                : pdfStatus === "error"
+                ? "저장 실패 · 다시 시도"
+                : "내 견적서 저장 (본인 보관용, 업체 공유금지)"}
             </button>
             <button
               onClick={saveToCloud}
@@ -1460,6 +1599,41 @@ export default function InteriorMaterialGame() {
           <div className="flex items-center justify-center gap-1.5 mt-8 pt-4 border-t border-stone-200">
             <img src={LOGO_SRC} alt="logo" className="w-4 h-4 object-contain opacity-70" />
             <span className="text-[11px] text-stone-400">진성은디자인</span>
+          </div>
+        </div>
+      )}
+
+      {shareText && (
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <h3 className="font-bold">업체에 보낼 자재리스트</h3>
+              <button onClick={() => setShareText(null)} className="text-stone-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-5 pb-3">
+              <p className="text-xs text-teal-800 bg-teal-50 border border-teal-100 rounded-lg px-3 py-2">
+                복사되었습니다. 카톡·메일에 붙여넣기(Ctrl+V) 하세요. <b>금액은 들어있지 않습니다.</b>
+              </p>
+            </div>
+            <pre className="flex-1 overflow-auto mx-5 mb-4 p-3 bg-stone-50 border border-stone-200 rounded-lg text-[11px] leading-relaxed whitespace-pre-wrap font-sans text-stone-700">
+              {shareText}
+            </pre>
+            <div className="px-5 pb-5 flex gap-2">
+              <button
+                onClick={async () => setShared(await copyText(shareText))}
+                className="flex-1 bg-stone-900 text-white text-sm font-medium py-3 rounded-full"
+              >
+                다시 복사하기
+              </button>
+              <button
+                onClick={() => setShareText(null)}
+                className="flex-1 border border-stone-200 text-stone-700 text-sm font-medium py-3 rounded-full"
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}
