@@ -684,6 +684,18 @@ export default function InteriorMaterialGame() {
     // 저장된 견적 링크로 들어왔다면 그 id를 기억해둔다 (로그인 확인 후 불러온다)
     const id = new URLSearchParams(window.location.search).get("e");
     if (id) setPendingLinkId(id);
+
+    // 소셜 로그인이 실패하면 주소 뒤에 이유가 붙어서 돌아온다.
+    // 그냥 두면 아무 일도 없던 것처럼 보여서, 이유를 화면에 띄운다.
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const err = query.get("error_description") || query.get("error") ||
+                hash.get("error_description") || hash.get("error");
+    if (err) {
+      setAuthError(decodeURIComponent(err));
+      setShowAuthBox(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
     setRestored(true);
   }, []);
 
