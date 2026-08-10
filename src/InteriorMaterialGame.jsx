@@ -910,6 +910,10 @@ export default function InteriorMaterialGame() {
   // 금액이 들어간 견적서를 PDF 파일로 바로 내려받는다.
   // 라이브러리는 무거워서 버튼을 누른 순간에만 불러온다(초기 로딩 속도 유지).
   async function saveEstimate() {
+    if (!user) {
+      setShowAuthBox(true);
+      return;
+    }
     const sheet = document.getElementById("estimate-sheet");
     if (!sheet) return;
     setPdfStatus("making");
@@ -1638,59 +1642,81 @@ export default function InteriorMaterialGame() {
           </div>
           </div>
 
-          <div className="space-y-2 no-print">
-            <button
-              onClick={saveEstimate}
-              disabled={pdfStatus === "making"}
-              className="w-full flex items-center justify-center gap-2 bg-stone-900 text-white text-sm font-medium py-3.5 rounded-full disabled:opacity-60"
-            >
-              <FileDown className="w-4 h-4" />
-              {pdfStatus === "making"
-                ? "PDF 만드는 중..."
-                : pdfStatus === "done"
-                ? "PDF 저장 완료 ✓"
-                : pdfStatus === "error"
-                ? "저장 실패 · 다시 시도"
-                : "내 견적서 PDF로 저장 (본인 보관용)"}
-            </button>
-            <button
-              onClick={saveEstimateLink}
-              disabled={saveStatus === "saving"}
-              className="w-full flex items-center justify-center gap-2 border border-teal-700 text-teal-700 text-sm font-medium py-3.5 rounded-full disabled:opacity-60"
-            >
-              <UserPlus className="w-4 h-4" />
-              {!user
-                ? "내 견적서 링크로 저장 (로그인 필요)"
-                : saveStatus === "saving"
-                ? "저장 중..."
-                : saveStatus === "error"
-                ? "저장 실패 · 다시 시도"
-                : "내 견적서 링크로 저장"}
-            </button>
-            <button
-              onClick={shareMaterials}
-              className="w-full flex items-center justify-center gap-2 bg-white border border-stone-200 text-stone-700 text-sm font-medium py-3 rounded-full"
-            >
-              <Share2 className="w-4 h-4" />
-              {!user
-                ? "업체에 자재리스트 공유하기 (로그인 필요)"
-                : shared
-                ? "자재리스트가 복사되었습니다 ✓"
-                : "업체에 자재리스트 공유하기"}
-            </button>
-            <div className="bg-teal-50 border border-teal-100 rounded-xl p-3.5 mt-3 flex items-start gap-2">
-              <Share2 className="w-4 h-4 text-teal-700 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-teal-800 leading-relaxed">
-                업체에는 <b>자재리스트만</b> 전달됩니다. 금액은 빠지니 안심하고 보내세요.
-                카톡이나 메일로 보낸 뒤 <b>보낸 기록을 남겨두면</b> 나중에 자재가 바뀌었을 때 근거가 됩니다.
-              </p>
-            </div>
-            {user && (
-              <button onClick={signOut} className="w-full text-center text-xs text-stone-400 py-1">
-                {user.email}로 로그인됨 · 로그아웃
+          {/* 로그인 전에는 버튼 3개가 비슷해 보여 구분이 안 되므로, 하나로 합쳐 로그인부터 안내한다 */}
+          {!user ? (
+            <div className="no-print">
+              <button
+                onClick={() => setShowAuthBox(true)}
+                className="w-full flex items-center justify-center gap-2 bg-stone-900 text-white text-sm font-medium py-4 rounded-full"
+              >
+                <UserPlus className="w-4 h-4" />
+                로그인하고 저장·내보내기·공유하기
               </button>
-            )}
-          </div>
+              <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 mt-3">
+                <p className="text-xs text-stone-500 mb-2.5">로그인하면 이런 걸 할 수 있어요</p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2 text-xs text-stone-700">
+                    <UserPlus className="w-3.5 h-3.5 text-teal-700 flex-shrink-0 mt-0.5" />
+                    <span><b>저장</b> — 링크로 보관해 두고 언제든 다시 열어보기</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-xs text-stone-700">
+                    <FileDown className="w-3.5 h-3.5 text-teal-700 flex-shrink-0 mt-0.5" />
+                    <span><b>내보내기</b> — 금액이 들어간 견적서를 PDF로 받기</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-xs text-stone-700">
+                    <Share2 className="w-3.5 h-3.5 text-teal-700 flex-shrink-0 mt-0.5" />
+                    <span><b>공유하기</b> — 업체에 자재리스트 보내기 (금액 제외)</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2 no-print">
+              <button
+                onClick={saveEstimateLink}
+                disabled={saveStatus === "saving"}
+                className="w-full flex items-center justify-center gap-2 bg-stone-900 text-white text-sm font-medium py-3.5 rounded-full disabled:opacity-60"
+              >
+                <UserPlus className="w-4 h-4" />
+                {saveStatus === "saving"
+                  ? "저장 중..."
+                  : saveStatus === "error"
+                  ? "저장 실패 · 다시 시도"
+                  : "저장 — 링크로 보관하기"}
+              </button>
+              <button
+                onClick={saveEstimate}
+                disabled={pdfStatus === "making"}
+                className="w-full flex items-center justify-center gap-2 border border-teal-700 text-teal-700 text-sm font-medium py-3.5 rounded-full disabled:opacity-60"
+              >
+                <FileDown className="w-4 h-4" />
+                {pdfStatus === "making"
+                  ? "PDF 만드는 중..."
+                  : pdfStatus === "done"
+                  ? "PDF 저장 완료 ✓"
+                  : pdfStatus === "error"
+                  ? "저장 실패 · 다시 시도"
+                  : "내보내기 — PDF 받기 (본인 보관용)"}
+              </button>
+              <button
+                onClick={shareMaterials}
+                className="w-full flex items-center justify-center gap-2 bg-white border border-stone-200 text-stone-700 text-sm font-medium py-3.5 rounded-full"
+              >
+                <Share2 className="w-4 h-4" />
+                {shared ? "자재리스트가 복사되었습니다 ✓" : "공유하기 — 업체에 자재리스트"}
+              </button>
+              <div className="bg-teal-50 border border-teal-100 rounded-xl p-3.5 mt-3 flex items-start gap-2">
+                <Share2 className="w-4 h-4 text-teal-700 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-teal-800 leading-relaxed">
+                  업체에는 <b>자재리스트만</b> 전달됩니다. 금액은 빠지니 안심하고 보내세요.
+                  카톡이나 메일로 보낸 뒤 <b>보낸 기록을 남겨두면</b> 나중에 자재가 바뀌었을 때 근거가 됩니다.
+                </p>
+              </div>
+              <button onClick={signOut} className="w-full text-center text-xs text-stone-400 py-1">
+                {user?.email}로 로그인됨 · 로그아웃
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center justify-center gap-4 mt-6 no-print">
             <button onClick={goPrev} className="flex items-center gap-1 text-sm text-stone-400">
