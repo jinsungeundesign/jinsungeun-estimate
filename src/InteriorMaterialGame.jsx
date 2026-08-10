@@ -613,10 +613,6 @@ function defaultIndexFor(step, profileId) {
   return items.length - 1;
 }
 
-// Supabase는 커스텀 제공자(custom:naver)를 설정 API에 노출하지 않아 자동 감지가 안 된다.
-// 대시보드 Custom Providers에서 켜고 끌 때 이 값을 함께 맞춰야 한다.
-const NAVER_ENABLED = true;
-
 // 소셜 로그인 버튼용 브랜드 로고.
 // 각 사의 브랜드 가이드가 지정한 형태·색상이라 앱 톤앤매너(블랙·화이트·그린)와 별개로 원본을 따른다.
 function GoogleIcon() {
@@ -626,14 +622,6 @@ function GoogleIcon() {
       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
       <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-    </svg>
-  );
-}
-
-function NaverIcon() {
-  return (
-    <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-      <path d="M13.02 10.72 6.67 1.5H1.5v17h5.48V9.28l6.35 9.22h5.17v-17h-5.48v9.22z" />
     </svg>
   );
 }
@@ -783,10 +771,8 @@ export default function InteriorMaterialGame() {
       return;
     }
     setAuthError("");
-    // 네이버는 Supabase 기본 제공자가 아니라, 대시보드에 등록한 커스텀 OAuth 식별자를 사용
-    const providerId = provider === "naver" ? "custom:naver" : provider;
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: providerId,
+      provider,
       options: { redirectTo: window.location.origin },
     });
     if (error) setAuthError(error.message);
@@ -1805,7 +1791,7 @@ export default function InteriorMaterialGame() {
               </ul>
             </div>
 
-            {(enabledProviders.google || enabledProviders.kakao || NAVER_ENABLED) && (
+            {(enabledProviders.google || enabledProviders.kakao) && (
               <div className="space-y-2 mb-6">
                 {enabledProviders.google && (
                   <button
@@ -1825,15 +1811,6 @@ export default function InteriorMaterialGame() {
                     카카오로 로그인
                   </button>
                 )}
-                {NAVER_ENABLED && (
-                  <button
-                    onClick={() => signInWithProvider("naver")}
-                    className="w-full flex items-center justify-center gap-2 bg-[#03C75A] text-white text-sm font-medium py-3.5 rounded-full"
-                  >
-                    <NaverIcon />
-                    네이버로 로그인
-                  </button>
-                )}
               </div>
             )}
 
@@ -1844,7 +1821,7 @@ export default function InteriorMaterialGame() {
             )}
 
             <div className="text-xs text-stone-400 mb-3">
-              {enabledProviders.google || enabledProviders.kakao || NAVER_ENABLED
+              {enabledProviders.google || enabledProviders.kakao
                 ? "또는 이메일로 로그인"
                 : "이메일로 로그인 링크를 받으세요"}
             </div>
