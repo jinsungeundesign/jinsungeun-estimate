@@ -208,13 +208,13 @@ const FAUCET_GROHE_IMG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAkACQAAD/4QC
 const WALLPAPER_ITEMS = {
   budget: [
     { name: "실크도배", price: "평당 12~16만원", detail: "벽지 등급에 따라 단가 차이", image: WALLPAPER_IMG },
-    { name: "디아망", price: "평당 14~18만원", detail: "브랜드: 신한 · 회벽·모던 질감", image: DIAMANT_IMG },
-    { name: "디아망포티스", price: "평당 15~19만원", detail: "브랜드: 신한 파사드월가드 · 무몰딩 전체 벽·천장", image: DIAMANT_FORTIS_IMG2 },
+    { name: "디아망", price: "평당 14~18만원", detail: "LX하우시스 디아망 · 동급: 신한벽지 파사드 · 회벽·모던 질감", image: DIAMANT_IMG },
+    { name: "디아망포티스", price: "평당 15~19만원", detail: "LX하우시스 디아망포티스 · 동급: 신한벽지 파사드월가드 · 무몰딩 전체 벽·천장", image: DIAMANT_FORTIS_IMG2 },
   ],
   common: [
     { name: "실크도배", price: "평당 25~30만원", detail: "거실·주방 등 공용부에 고급 벽지 집중 · 무몰딩 마감 기준", image: WALLPAPER_IMG },
-    { name: "디아망", price: "평당 27~32만원", detail: "브랜드: 신한 · 회벽·모던 질감", image: DIAMANT_IMG },
-    { name: "디아망포티스", price: "평당 28~33만원", detail: "브랜드: 신한 파사드월가드 · 무몰딩 전체 벽·천장", image: DIAMANT_FORTIS_IMG2 },
+    { name: "디아망", price: "평당 27~32만원", detail: "LX하우시스 디아망 · 동급: 신한벽지 파사드 · 회벽·모던 질감", image: DIAMANT_IMG },
+    { name: "디아망포티스", price: "평당 28~33만원", detail: "LX하우시스 디아망포티스 · 동급: 신한벽지 파사드월가드 · 무몰딩 전체 벽·천장", image: DIAMANT_FORTIS_IMG2 },
   ],
   highend: [
     { name: "전체 도장 마감", price: "평당 60만원 이상", detail: "도배 없이 천장·벽체 전체를 도장으로 마감", image: HIGHEND_PAINT_IMG },
@@ -224,11 +224,11 @@ const WALLPAPER_ITEMS = {
 };
 
 // 욕실 타일공사도 컨셉에 따라 선택지가 달라진다 — 하이엔드는 포세린·유럽산만
-const BATH_TILE_PORCELAIN = { name: "포세린타일(600×1200)", price: "380만원 이상", detail: "타일 약 75만원 + 떠붙임 인건비 210만원 + 부자재 60~75만원(트렌치·유가 포함) + 경비·식대·운반 35만원", image: BATH_PORCELAIN_IMG };
+const BATH_TILE_PORCELAIN = { name: "올철거 후 포세린타일", price: "380만원 이상", detail: "포세린타일 600×1200 · 타일 약 75만원 + 떠붙임 인건비 210만원 + 부자재 60~75만원(트렌치·유가 포함) + 경비·식대·운반 35만원", image: BATH_PORCELAIN_IMG };
 const BATH_TILE_ITEMS = {
   standard: [
     { name: "덧방 시공", price: "100만원 이상", detail: "국산/수입 일반 도기질 300×600·300×300 타일 30~40만원 + 인건비 45만원(1품, 하루 1칸) + 부자재 15~20만원 + 경비·식대·운반 10만원", image: WATERPROOF_PATCH_IMG },
-    { name: "전면 재시공", price: "185만원 이상", detail: "기존 타일 철거 후 재시공 · 인건비 3품", image: WATERPROOF_FULL_IMG },
+    { name: "올철거(전면 재시공)", price: "185만원 이상", detail: "기존 타일 올철거 후 재시공 · 인건비 3품", image: WATERPROOF_FULL_IMG },
     BATH_TILE_PORCELAIN,
   ],
   highend: [
@@ -269,7 +269,9 @@ const STEPS = [
       { name: "주방", price: "200~280만원", detail: "순정 확장(창호·마감 제외) 실측 견적 기준", image: EXT_KITCHEN_IMG },
       { name: "방", price: "200~280만원", perCount: true, detail: "순정 확장(창호·마감 제외) 실측 견적 기준, 방마다 개수 선택", image: EXT_ROOM_IMG },
     ]},
+  // 발코니 확장을 하나도 안 하면 행위허가 자체가 필요 없으므로 단계를 건너뛴다
   { id: "permit_fee", name: "행위허가/행정신고비", icon: Layers, type: "select", question: "발코니 확장 관련 행위허가·행정신고비는 어떻게 잡을까요?", note: "실제 견적 기준",
+    showIf: (sel) => Array.isArray(sel.balcony_extension) && sel.balcony_extension.length > 0,
     items: [
       { name: "일반 세대", price: "30~50만원", image: PERMIT_GENERAL_IMG },
       { name: "주상복합", price: "120만원", detail: "일반 세대보다 절차가 복잡해 신고비가 높음", image: PERMIT_COMPLEX_IMG },
@@ -315,7 +317,7 @@ const STEPS = [
     ]},
   { id: "front_door_partition", name: "중문", icon: DoorClosed, type: "addon", question: "중문을 설치할까요?", note: "거실·주방 등 집마다 0~2개소 필요할 수 있어요",
     items: [
-      { name: "3연동중문", price: "60~90만원", detail: "실제 시공견적 기준 · 터닝도어, 거실/주방에 설치되는 경우가 많음", image: DOOR_TRIPLE_IMG },
+      { name: "3연동중문", price: "60~90만원", detail: "실제 시공견적 기준", image: DOOR_TRIPLE_IMG },
       { name: "고급형중문", price: "135~148.5만원", detail: "천장매립형·슬라이딩·여닫이 등 스타일 선택 가능, 강화유리 기준 · 레일 천장 매립 시 목공 별도", image: DOOR_PREMIUM_IMG },
       { name: "자동중문", price: "200만원 이상", detail: "레일 천장 매립 시 목공 별도", image: DOOR_AUTO_IMG },
     ]},
@@ -430,8 +432,8 @@ const STEPS = [
     ]},
   { id: "move_in_cleaning", name: "입주청소", icon: Sparkles, type: "addon", question: "입주청소를 진행할까요?", note: "전용면적 평당 단가 · 직접 하시려면 건너뛰기",
     items: [
-      { name: "일반 입주청소", price: "평당 1.5~2만원", detail: "공사 분진, 톱밥, 시멘트·실리콘 자국 제거", image: CLEAN_BASIC_IMG },
-      { name: "특수/고급 준공청소", price: "평당 2.2~2.8만원 이상", detail: "친환경 스팀, 피톤치드 · 대형 평수·특수자재", image: CLEAN_SPECIAL_IMG },
+      { name: "일반 입주청소", price: "평당 2.1~2.8만원", detail: "공사 분진, 톱밥, 시멘트·실리콘 자국 제거", image: CLEAN_BASIC_IMG },
+      { name: "특수/고급 준공청소", price: "평당 3.1~3.9만원 이상", detail: "친환경 스팀, 피톤치드 · 대형 평수·특수자재", image: CLEAN_SPECIAL_IMG },
     ]},
 ];
 
@@ -967,10 +969,12 @@ export default function InteriorMaterialGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingLinkId, user, authLoading]);
 
-  const step = STEPS[stepIdx];
+  // 선택 상황에 따라 필요 없는 단계는 목록에서 빼고 진행한다
+  const visibleSteps = STEPS.filter((s) => !s.showIf || s.showIf(selections));
+  const step = visibleSteps[Math.min(stepIdx, visibleSteps.length - 1)];
   const items = stepItems(step, profile?.id);
   const stepNote = step?.noteByProfile?.[profile?.id] || step?.note;
-  const isLast = stepIdx === STEPS.length - 1;
+  const isLast = stepIdx >= visibleSteps.length - 1;
   const current = selections[step?.id];
   const currentMulti = (step?.type === "multi" ? selections[step.id] : null) || [];
 
@@ -1051,7 +1055,7 @@ export default function InteriorMaterialGame() {
     setDetailItem(null);
     if (isLast) setPhase("summary");
     // 연속으로 눌렸을 때 마지막 단계를 넘어가지 않도록 상한을 둔다
-    else setStepIdx((i) => Math.min(i + 1, STEPS.length - 1));
+    else setStepIdx((i) => Math.min(i + 1, visibleSteps.length - 1));
   }
   function goPrev() {
     setDetailItem(null);
@@ -1089,8 +1093,12 @@ export default function InteriorMaterialGame() {
     return bathCount;
   }
 
+  // 조건이 안 맞아 화면에서 빠진 단계는 총액에도 넣지 않는다
+  const visibleStepIds = new Set(visibleSteps.map((s) => s.id));
+
   let totalLo = 0, totalHi = 0, excludedCount = 0;
   Object.entries(selections).forEach(([key, val]) => {
+    if (!visibleStepIds.has(key)) return;
     const arr = Array.isArray(val) ? val : [val];
     const stepMult = bathMultiplier(key, arr);
     arr.forEach((item) => {
@@ -1116,7 +1124,7 @@ export default function InteriorMaterialGame() {
   const amount = (lo, hi) => (minOnly ? `${won(lo)}만원 이상` : `${won(lo)}~${won(hi)}만원`);
 
   // multi 타입 선택을 자재리스트/견적서에서 항목별로 펼쳐 보여주기 위한 평탄화
-  const flatEntries = STEPS.flatMap((s) => {
+  const flatEntries = visibleSteps.flatMap((s) => {
     const val = selections[s.id];
     if (!val) return [];
     const arr = Array.isArray(val) ? val : [val];
@@ -1139,7 +1147,7 @@ export default function InteriorMaterialGame() {
               {phase === "bathroom_count" ? "욕실 개수 선택" : phase === "summary" ? "견적 결과" : step ? step.name : ""}
             </span>
             {phase === "select" && (
-              <span className="text-[11px] font-mono text-stone-400">{stepIdx + 1} / {STEPS.length}</span>
+              <span className="text-[11px] font-mono text-stone-400">{stepIdx + 1} / {visibleSteps.length}</span>
             )}
           </div>
           <div className="w-full h-1 bg-stone-200 rounded-full overflow-hidden">
@@ -1149,7 +1157,7 @@ export default function InteriorMaterialGame() {
                 width:
                   phase === "bathroom_count" ? "6%" :
                   phase === "summary" ? "100%" :
-                  `${8 + Math.round((stepIdx / STEPS.length) * 92)}%`,
+                  `${8 + Math.round((stepIdx / visibleSteps.length) * 92)}%`,
               }}
             />
           </div>
