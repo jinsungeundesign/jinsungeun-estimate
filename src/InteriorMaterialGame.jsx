@@ -552,6 +552,9 @@ export default function InteriorMaterialGame() {
   const [authEmail, setAuthEmail] = useState("");
   const [authSent, setAuthSent] = useState(false);
   const [showAuthBox, setShowAuthBox] = useState(false);
+  const [authError, setAuthError] = useState("");
+  // Supabase에서 실제로 켜 둔 로그인 수단만 화면에 보여준다 (대시보드에서 켜면 자동으로 나타남)
+  const [enabledProviders, setEnabledProviders] = useState({});
   const [saveStatus, setSaveStatus] = useState(""); // "", "saving", "saved", "error"
   const [hasSavedRemote, setHasSavedRemote] = useState(false);
 
@@ -570,21 +573,42 @@ export default function InteriorMaterialGame() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!supabase) return;
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } })
+      .then((r) => r.json())
+      .then((d) => setEnabledProviders(d?.external || {}))
+      .catch(() => setEnabledProviders({}));
+  }, []);
+
   async function sendMagicLink() {
     if (!supabase || !authEmail) return;
     setAuthSent(false);
-    const { error } = await supabase.auth.signInWithOtp({ email: authEmail });
-    if (!error) setAuthSent(true);
+    setAuthError("");
+    // 로그인 링크를 눌렀을 때 지금 보고 있는 주소로 정확히 돌아오게 한다
+    const { error } = await supabase.auth.signInWithOtp({
+      email: authEmail,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) setAuthError(error.message);
+    else setAuthSent(true);
   }
 
   async function signInWithProvider(provider) {
     if (!supabase) {
-      alert("아직 저장 서버(Supabase)가 연결되지 않았어요.");
+      setAuthError("저장 서버(Supabase)가 연결되지 않았어요.");
       return;
     }
+    setAuthError("");
     // 네이버는 Supabase 기본 제공자가 아니라, 대시보드에 등록한 커스텀 OAuth 식별자를 사용
     const providerId = provider === "naver" ? "custom:naver" : provider;
-    await supabase.auth.signInWithOAuth({ provider: providerId });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: providerId,
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) setAuthError(error.message);
   }
 
   async function signOut() {
@@ -615,6 +639,63 @@ export default function InteriorMaterialGame() {
       { onConflict: "user_id" }
     );
     setSaveStatus(error ? "error" : "saved");
+  }
+
+  // 업체에 보낼 자재리스트 — 금액은 일부러 빼고 자재명만 담는다
+  function buildMaterialText() {
+    const lines = [
+      "[진성은디자인 · 자재리스트]",
+      `${pyeong}평(전용) · 욕실 ${bathCount}개 · ${profile?.name || ""}`.trim(),
+      "",
+    ];
+    flatEntries.forEach(({ step: s, item, mult }) => {
+      const count = item.count > 1 ? ` ×${item.count}` : "";
+      const rooms = mult > 1 ? ` (욕실 ${mult}칸)` : "";
+      lines.push(`· ${s.name}: ${item.name}${count}${rooms}`);
+    });
+    lines.push("", "※ 자재 목록입니다. 금액은 포함되어 있지 않습니다.");
+    return lines.join("\n");
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 클립보드 API를 막는 환경(구형 브라우저·비보안 컨텍스트)용 대체 경로
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  async function shareMaterials() {
+    if (!user) {
+      setShowAuthBox(true);
+      return;
+    }
+    const text = buildMaterialText();
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "진성은디자인 자재리스트", text });
+        setShared(true);
+        return;
+      } catch (e) {
+        if (e.name === "AbortError") return; // 사용자가 공유창을 닫은 것뿐
+      }
+    }
+    setShared(await copyText(text));
+  }
+
+  // 금액이 들어간 견적서는 인쇄 대화상자에서 "PDF로 저장"을 쓴다 (별도 라이브러리 불필요)
+  function saveEstimate() {
+    window.print();
   }
 
   async function loadFromCloud() {
@@ -724,7 +805,8 @@ export default function InteriorMaterialGame() {
   function advance() {
     setDetailItem(null);
     if (isLast) setPhase("summary");
-    else setStepIdx((i) => i + 1);
+    // 연속으로 눌렸을 때 마지막 단계를 넘어가지 않도록 상한을 둔다
+    else setStepIdx((i) => Math.min(i + 1, STEPS.length - 1));
   }
   function goPrev() {
     setDetailItem(null);
@@ -794,7 +876,7 @@ export default function InteriorMaterialGame() {
   });
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 flex flex-col max-w-md mx-auto">
+    <div className="min-h-screen bg-stone-50 text-stone-900 flex flex-col max-w-md mx-auto print-sheet">
       {/* 슬림 상단바 */}
       {phase !== "pyeong" && (
         <div className="px-5 pt-5 pb-3">
@@ -1163,11 +1245,11 @@ export default function InteriorMaterialGame() {
             {sink ? ` · 싱크대 추정 ${sink.length}m` : ""}
           </div>
 
-          <div className="flex items-center gap-1.5 mb-3">
+          <div className="flex items-center gap-1.5 mb-3 no-print">
             <ListChecks className="w-4 h-4 text-teal-700" />
             <h2 className="text-sm font-bold text-stone-500 tracking-wide">자재리스트</h2>
           </div>
-          <div className="grid grid-cols-4 gap-2 mb-8">
+          <div className="grid grid-cols-4 gap-2 mb-8 no-print">
             {flatEntries.map(({ step: s, item, idx }, i) => (
               <button
                 key={s.id + "-" + i}
@@ -1192,7 +1274,7 @@ export default function InteriorMaterialGame() {
             <Receipt className="w-4 h-4 text-teal-700" />
             <h2 className="text-sm font-bold text-stone-500 tracking-wide">견적서</h2>
           </div>
-          <div className="bg-stone-900 text-white rounded-2xl p-4 mb-3">
+          <div className="bg-stone-900 text-white rounded-2xl p-4 mb-3 print-plain print-row">
             <div className="space-y-1.5 pb-3 mb-3 border-b border-white/10">
               <div className="flex items-baseline justify-between text-xs">
                 <span className="text-stone-400">공사비 소계</span>
@@ -1226,7 +1308,7 @@ export default function InteriorMaterialGame() {
           <div className="space-y-1.5 mb-6">
             {flatEntries.map(({ step: s, item, mult }, i) => {
               return (
-                <div key={s.id + "-" + i} className="flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-stone-100">
+                <div key={s.id + "-" + i} className="flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-stone-100 print-row">
                   <div>
                     <div className="text-[10px] text-stone-400">{s.name}</div>
                     <div className="text-sm font-medium">
@@ -1252,9 +1334,9 @@ export default function InteriorMaterialGame() {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 no-print">
             <button
-              onClick={() => alert("비회원 접근 가능 · PDF 견적서 다운로드 (프로토타입)")}
+              onClick={saveEstimate}
               className="w-full flex items-center justify-center gap-2 bg-stone-900 text-white text-sm font-medium py-3.5 rounded-full"
             >
               <FileDown className="w-4 h-4" />
@@ -1275,14 +1357,14 @@ export default function InteriorMaterialGame() {
                 : "자재리스트 저장하기"}
             </button>
             <button
-              onClick={() => setShared(true)}
+              onClick={shareMaterials}
               className="w-full flex items-center justify-center gap-2 bg-white border border-stone-200 text-stone-700 text-sm font-medium py-3 rounded-full"
             >
               <Share2 className="w-4 h-4" />
               {!user
                 ? "업체에 자재리스트 공유하기 (로그인 필요)"
                 : shared
-                ? "링크가 복사되었습니다"
+                ? "자재리스트가 복사되었습니다 ✓"
                 : "업체에 자재리스트 공유하기"}
             </button>
             <div className="bg-teal-50 border border-teal-100 rounded-xl p-3.5 mt-3 flex items-start gap-2">
@@ -1300,29 +1382,46 @@ export default function InteriorMaterialGame() {
           </div>
 
           {showAuthBox && !user && (
-            <div className="mt-4 border border-stone-200 rounded-xl p-4">
+            <div className="mt-4 border border-stone-200 rounded-xl p-4 no-print">
               <div className="text-sm font-medium mb-2">간편 로그인</div>
-              <div className="space-y-2 mb-4">
-                <button
-                  onClick={() => signInWithProvider("google")}
-                  className="w-full flex items-center justify-center gap-2 border border-stone-200 text-stone-700 text-sm font-medium py-2.5 rounded-full"
-                >
-                  구글로 로그인
-                </button>
-                <button
-                  onClick={() => signInWithProvider("kakao")}
-                  className="w-full flex items-center justify-center gap-2 bg-[#FEE500] text-stone-900 text-sm font-medium py-2.5 rounded-full"
-                >
-                  카카오로 로그인
-                </button>
-                <button
-                  onClick={() => signInWithProvider("naver")}
-                  className="w-full flex items-center justify-center gap-2 bg-[#03C75A] text-white text-sm font-medium py-2.5 rounded-full"
-                >
-                  네이버로 로그인
-                </button>
+              {(enabledProviders.google || enabledProviders.kakao || enabledProviders.naver) && (
+                <div className="space-y-2 mb-4">
+                  {enabledProviders.google && (
+                    <button
+                      onClick={() => signInWithProvider("google")}
+                      className="w-full flex items-center justify-center gap-2 border border-stone-200 text-stone-700 text-sm font-medium py-2.5 rounded-full"
+                    >
+                      구글로 로그인
+                    </button>
+                  )}
+                  {enabledProviders.kakao && (
+                    <button
+                      onClick={() => signInWithProvider("kakao")}
+                      className="w-full flex items-center justify-center gap-2 bg-[#FEE500] text-stone-900 text-sm font-medium py-2.5 rounded-full"
+                    >
+                      카카오로 로그인
+                    </button>
+                  )}
+                  {enabledProviders.naver && (
+                    <button
+                      onClick={() => signInWithProvider("naver")}
+                      className="w-full flex items-center justify-center gap-2 bg-[#03C75A] text-white text-sm font-medium py-2.5 rounded-full"
+                    >
+                      네이버로 로그인
+                    </button>
+                  )}
+                </div>
+              )}
+              {authError && (
+                <div className="text-[11px] text-stone-600 bg-stone-100 rounded-lg px-3 py-2 mb-3 leading-relaxed">
+                  로그인에 실패했어요: {authError}
+                </div>
+              )}
+              <div className="text-[11px] text-stone-400 mb-2">
+                {enabledProviders.google || enabledProviders.kakao || enabledProviders.naver
+                  ? "또는 이메일로 로그인"
+                  : "이메일로 로그인 링크를 받으세요"}
               </div>
-              <div className="text-[11px] text-stone-400 mb-2">또는 이메일로 로그인</div>
               {authSent ? (
                 <p className="text-xs text-teal-700">
                   {authEmail}로 로그인 링크를 보냈어요. 메일함을 확인해주세요.
@@ -1348,7 +1447,7 @@ export default function InteriorMaterialGame() {
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-4 mt-6">
+          <div className="flex items-center justify-center gap-4 mt-6 no-print">
             <button onClick={goPrev} className="flex items-center gap-1 text-sm text-stone-400">
               <ChevronLeft className="w-4 h-4" /> 선택으로 돌아가기
             </button>

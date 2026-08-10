@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 견적서 인쇄(= PDF로 저장) 전용 스타일.
+   버튼·자재 사진처럼 종이에 필요 없는 건 빼고, 검정 총액 카드는 흰 바탕으로 바꾼다. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  /* 화면에서는 폭이 좁게 잡혀 있지만 종이에서는 폭을 다 쓴다 */
+  .print-sheet {
+    max-width: none !important;
+  }
+
+  /* 총액 카드: 잉크를 아끼고 글자가 보이도록 반전 */
+  .print-plain,
+  .print-plain * {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .print-plain {
+    border: 1px solid #000;
+  }
+
+  /* 항목이 페이지 경계에서 잘리지 않게 */
+  .print-row {
+    break-inside: avoid;
+  }
+}
