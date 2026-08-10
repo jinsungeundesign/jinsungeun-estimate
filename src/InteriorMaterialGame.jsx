@@ -522,6 +522,36 @@ const STEP_BY_ID = new Map(STEPS.map((s) => [s.id, s]));
 // 용량이 커지고, 나중에 단가를 고쳐도 저장해둔 옛 금액이 계속 따라다니기 때문.
 const STORAGE_KEY = "jinsungeun-estimate-v1";
 
+// 단계 안내문에는 앱 사용자에게 하는 말("건너뛰기", "추천값이 미리 선택")과
+// 내부 사정("개별 단가가 불명확해 등급으로 통합")이 섞여 있다.
+// 업체가 견적을 내는 데 필요한 기준(자재+시공 포함, 설치비 별도 등)만 남긴다.
+const NOTE_DROP = /건너뛰기|선택하세요|바꾸세요|미리 선택|추천값|불명확|괄호 안은|달라져요|더해져요|포함해요|필요할 수 있어요|중복선택/;
+
+function cleanNote(note) {
+  if (!note) return "";
+  return note
+    .split(" · ")
+    .filter((part) => part.trim() && !NOTE_DROP.test(part))
+    .join(" · ")
+    .trim();
+}
+
+// 업체에 보내는 자재리스트에서 우리 단가만 걷어낸다.
+// 설명글 안에 "타일 30~40만원 + 인건비 45만원" 처럼 금액이 섞여 있어서,
+// 사양(제품명·규격·공정 범위)은 남기고 숫자만 지운다.
+function stripPrices(text) {
+  if (!text) return "";
+  return text
+    .replace(/\([^)]*원[^)]*\)/g, "") // 금액이 든 괄호 전체 (예: "기본철거(㎡당 1.0~1.1만원)")
+    .replace(/\d[\d.,~\s]*만원(\s*이상)?/g, "") // "30~40만원", "200만원 이상"
+    .replace(/\d[\d.,]*\s*원/g, "") // "9,800원"
+    .replace(/\s*[·+]\s*(?=[·+]|$)/g, "") // 금액이 빠지며 남은 연결부호
+    .replace(/\(\s*\)/g, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^[\s·+,]+|[\s·+,]+$/g, "")
+    .trim();
+}
+
 function compactSelections(selections) {
   const out = {};
   Object.entries(selections).forEach(([stepId, val]) => {
@@ -585,6 +615,10 @@ export default function InteriorMaterialGame() {
   const [restored, setRestored] = useState(false);
   const [pdfStatus, setPdfStatus] = useState(""); // "", "making", "done", "error"
   const [shareText, setShareText] = useState(null); // 공유 내용 미리보기
+  const [savedLink, setSavedLink] = useState(null); // 저장 후 받은 내 견적서 링크
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [linkStatus, setLinkStatus] = useState(""); // "", "loading", "notfound"
+  const [pendingLinkId, setPendingLinkId] = useState(null);
 
   // 새로고침이나 소셜 로그인(페이지가 통째로 다시 열림) 후에도 진행하던 견적을 그대로 이어간다
   useEffect(() => {
@@ -602,6 +636,9 @@ export default function InteriorMaterialGame() {
     } catch {
       // 저장된 값이 깨졌으면 그냥 처음부터 시작한다
     }
+    // 저장된 견적 링크로 들어왔다면 그 id를 기억해둔다 (로그인 확인 후 불러온다)
+    const id = new URLSearchParams(window.location.search).get("e");
+    if (id) setPendingLinkId(id);
     setRestored(true);
   }, []);
 
@@ -695,9 +732,11 @@ export default function InteriorMaterialGame() {
     setShowAuthBox(false);
   }
 
-  async function saveToCloud() {
+  // 견적을 서버에 저장하고, 본인만 열 수 있는 링크를 만들어준다.
+  // 사진·상세보기까지 그대로 살아있는 화면을 나중에 다시 볼 수 있다.
+  async function saveEstimateLink() {
     if (!supabase) {
-      alert("아직 저장 서버(Supabase)가 연결되지 않았어요. README의 배포 안내를 참고해주세요.");
+      setSaveStatus("error");
       return;
     }
     if (!user) {
@@ -705,33 +744,106 @@ export default function InteriorMaterialGame() {
       return;
     }
     setSaveStatus("saving");
-    const { error } = await supabase.from("estimates").upsert(
-      {
+    const { data, error } = await supabase
+      .from("saved_estimates")
+      .insert({
         user_id: user.id,
         pyeong,
         bathroom_count: Number(bathroomCount) || 1,
-        profile_name: profile?.name || null,
+        profile_id: profile?.id || null,
         selections: compactSelections(selections),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
-    setSaveStatus(error ? "error" : "saved");
+      })
+      .select("id")
+      .single();
+
+    if (error || !data) {
+      console.error(error);
+      setSaveStatus("error");
+      return;
+    }
+    setSaveStatus("saved");
+    setSavedLink(`${window.location.origin}/?e=${data.id}`);
+  }
+
+  // 링크로 들어왔을 때 저장된 견적을 불러온다 (본인 것만 열린다)
+  async function loadSharedEstimate(id) {
+    if (!supabase || !user) return;
+    setLinkStatus("loading");
+    const { data, error } = await supabase
+      .from("saved_estimates")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error || !data) {
+      setLinkStatus("notfound");
+      return;
+    }
+    const matched = PROFILES.find((p) => p.id === data.profile_id) || null;
+    setPyeong(data.pyeong || "");
+    setBathroomCount(String(data.bathroom_count || 1));
+    setProfile(matched);
+    setSelections(expandSelections(data.selections, matched?.id));
+    setStepIdx(STEPS.length - 1);
+    setPhase("summary");
+    setLinkStatus("");
+    // 주소창을 정리해 새로고침 때 다시 불러오지 않게 한다
+    window.history.replaceState({}, "", window.location.pathname);
   }
 
   // 업체에 보낼 자재리스트 — 금액은 일부러 빼고 자재명만 담는다
   function buildMaterialText() {
     const lines = [
       "[진성은디자인 · 자재리스트]",
-      `${pyeong}평(전용) · 욕실 ${bathCount}개 · ${profile?.name || ""}`.trim(),
-      "",
+      "─────────────────",
+      `전용면적 ${pyeong}평 · 욕실 ${bathCount}개 · 컨셉: ${profile?.name || "-"}`,
     ];
+    if (sink) lines.push(`싱크대 추정 길이 ${sink.length}m (${sink.layout})`);
+    lines.push(
+      "",
+      "아래 자재·사양 기준으로 견적 부탁드립니다.",
+      "동일 기준으로 비교하기 위한 목록이며, 금액은 포함되어 있지 않습니다.",
+      ""
+    );
+
     flatEntries.forEach(({ step: s, item, mult }) => {
       const count = item.count > 1 ? ` ×${item.count}` : "";
-      const rooms = mult > 1 ? ` (욕실 ${mult}칸)` : "";
-      lines.push(`· ${s.name}: ${item.name}${count}${rooms}`);
+      const rooms = mult > 1 ? ` (욕실 ${mult}칸 동일)` : "";
+      lines.push(`■ ${s.name}: ${item.name}${count}${rooms}`);
+
+      // 등급/사양 요약 (예: "예산중심형 포함 +")
+      const summary = stripPrices(item.summary);
+      if (summary) lines.push(`   · ${summary}`);
+
+      // 제품명·규격 등 세부 내역 — 우리 단가는 걸러낸다
+      const detail = stripPrices(item.detail);
+      if (detail) lines.push(`   · ${detail}`);
+
+      // 철거처럼 포함 범위가 목록으로 정의된 항목
+      if (Array.isArray(item.includes)) {
+        item.includes.forEach((inc) => {
+          const t = stripPrices(inc);
+          if (t) lines.push(`   · ${t}`);
+        });
+      }
+
+      // 어떤 수량 기준으로 견적을 내야 하는지 명시
+      if (item.unit === "sink_m" && sink) {
+        lines.push(`   · 산정 기준: 싱크대 길이 ${sink.length}m`);
+      } else if (/평당/.test(item.price || "")) {
+        lines.push(`   · 산정 기준: 전용면적 ${pyeong}평`);
+      }
+
+      // 단계 전체에 붙는 기준 안내 (예: "물류·시공 별도 기준")
+      const note = cleanNote(stripPrices(s.noteByProfile?.[profile?.id] || s.note));
+      if (note) lines.push(`   · ${note}`);
+
+      lines.push("");
     });
-    lines.push("", "※ 자재 목록입니다. 금액은 포함되어 있지 않습니다.");
+
+    lines.push(
+      "※ 위 목록에 없는 항목(폐기물 추가분, 현장 여건에 따른 할증 등)이 있으면 별도 표기 부탁드립니다."
+    );
     return lines.join("\n");
   }
 
@@ -795,24 +907,34 @@ export default function InteriorMaterialGame() {
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
       const margin = 10;
-      const imgW = pageW - margin * 2;
-      const imgH = (canvas.height * imgW) / canvas.width;
+      const gap = 6;
 
-      // 내용이 A4 한 장을 넘으면 페이지를 나눠 이어 붙인다
-      let remaining = imgH;
-      let offset = 0;
-      while (remaining > 0) {
+      // 화면이 세로로 긴 휴대폰 비율이라 A4 폭에 그대로 늘리면 장수가 크게 늘어난다.
+      // 신문처럼 2단으로 나눠 싣고, 한 단이 넘치면 다음 단·다음 장으로 이어붙인다.
+      const colW = (pageW - margin * 2 - gap) / 2;
+      const colH = pageH - margin * 2;
+      const mmPerPx = colW / canvas.width;
+      const sliceHpx = Math.floor(colH / mmPerPx);
+      const slices = Math.max(1, Math.ceil(canvas.height / sliceHpx));
+
+      for (let i = 0; i < slices; i++) {
+        const srcY = sliceHpx * i;
+        const srcH = Math.min(sliceHpx, canvas.height - srcY);
+        const part = document.createElement("canvas");
+        part.width = canvas.width;
+        part.height = srcH;
+        part.getContext("2d").drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+        const col = i % 2;
+        if (i > 0 && col === 0) pdf.addPage();
         pdf.addImage(
-          canvas.toDataURL("image/jpeg", 0.92),
+          part.toDataURL("image/jpeg", 0.92),
           "JPEG",
+          margin + col * (colW + gap),
           margin,
-          margin - offset,
-          imgW,
-          imgH
+          colW,
+          srcH * mmPerPx
         );
-        remaining -= pageH - margin * 2;
-        offset += pageH - margin * 2;
-        if (remaining > 0) pdf.addPage();
       }
 
       const today = new Date().toISOString().slice(0, 10);
@@ -825,29 +947,18 @@ export default function InteriorMaterialGame() {
     }
   }
 
-  async function loadFromCloud() {
-    if (!supabase || !user) return;
-    const { data } = await supabase
-      .from("estimates")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (data) {
-      setPyeong(data.pyeong || "");
-      setBathroomCount(String(data.bathroom_count || 1));
-      const matched = PROFILES.find((p) => p.name === data.profile_name);
-      if (matched) setProfile(matched);
-      setSelections(expandSelections(data.selections, matched?.id));
-      setHasSavedRemote(true);
-      setPhase("summary");
-      setStepIdx(STEPS.length - 1);
-    }
-  }
-
+  // 로그인이 확인되면, 링크로 들어온 견적을 불러온다
   useEffect(() => {
-    if (user) loadFromCloud();
+    if (!pendingLinkId) return;
+    if (authLoading) return;
+    if (!user) {
+      setShowAuthBox(true);
+      return;
+    }
+    loadSharedEstimate(pendingLinkId);
+    setPendingLinkId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [pendingLinkId, user, authLoading]);
 
   const step = STEPS[stepIdx];
   const items = stepItems(step, profile?.id);
@@ -991,6 +1102,11 @@ export default function InteriorMaterialGame() {
   const profitLo = totalLo * PROFIT_RATE, profitHi = totalHi * PROFIT_RATE;
   const grandLo = totalLo + profitLo, grandHi = totalHi + profitHi;
   const won = (n) => Math.round(n).toLocaleString();
+
+  // 하이엔드는 인건비·마감 노무비 편차가 커서 상한선이 의미가 없다.
+  // 최소 이만큼은 들어간다는 하한선만 보여준다.
+  const minOnly = profile?.id === "highend";
+  const amount = (lo, hi) => (minOnly ? `${won(lo)}만원 이상` : `${won(lo)}~${won(hi)}만원`);
 
   // multi 타입 선택을 자재리스트/견적서에서 항목별로 펼쳐 보여주기 위한 평탄화
   const flatEntries = STEPS.flatMap((s) => {
@@ -1409,11 +1525,11 @@ export default function InteriorMaterialGame() {
             <div className="space-y-1.5 pb-3 mb-3 border-b border-white/10">
               <div className="flex items-baseline justify-between text-xs">
                 <span className="text-stone-400">공사비 소계</span>
-                <span className="font-mono text-stone-200">{won(totalLo)}~{won(totalHi)}만원</span>
+                <span className="font-mono text-stone-200">{amount(totalLo, totalHi)}</span>
               </div>
               <div className="flex items-baseline justify-between text-xs">
                 <span className="text-stone-400">기업이윤·제경비 ({Math.round(PROFIT_RATE * 100)}%)</span>
-                <span className="font-mono text-stone-200">{won(profitLo)}~{won(profitHi)}만원</span>
+                <span className="font-mono text-stone-200">{amount(profitLo, profitHi)}</span>
               </div>
               <div className="text-[10px] text-stone-500 leading-relaxed">
                 기업이윤 · 4대보험 · 하자이행서류 · 현장관리비 등이 포함된 금액이에요
@@ -1424,9 +1540,17 @@ export default function InteriorMaterialGame() {
               <span className="text-[10px] bg-white/10 text-stone-300 px-1.5 py-0.5 rounded">부가세 별도</span>
             </div>
             <div className="font-mono text-2xl font-semibold">
-              {won(grandLo)}~{won(grandHi)}
-              <span className="text-sm font-normal text-stone-400 ml-1">만원</span>
+              {minOnly ? won(grandLo) : `${won(grandLo)}~${won(grandHi)}`}
+              <span className="text-sm font-normal text-stone-400 ml-1">
+                만원{minOnly ? " 이상" : ""}
+              </span>
             </div>
+            {minOnly && (
+              <div className="text-[10px] text-stone-400 mt-1.5 leading-relaxed">
+                하이엔드는 마감 난이도에 따라 인건비·노무비 편차가 매우 커서 상한선을 정하기 어려워요.
+                <b className="text-stone-300"> 최소 이 금액 이상</b>은 들어간다고 보시면 됩니다.
+              </div>
+            )}
             <div className="text-[10px] text-stone-500 mt-1.5">
               모든 금액은 부가세 별도 · 평당·자당·M당 등 단위 항목은 단가 기준으로 합산됨 · 실제 금액은 실측 후 확정돼요
             </div>
@@ -1479,21 +1603,21 @@ export default function InteriorMaterialGame() {
                 ? "PDF 저장 완료 ✓"
                 : pdfStatus === "error"
                 ? "저장 실패 · 다시 시도"
-                : "내 견적서 저장 (본인 보관용, 업체 공유금지)"}
+                : "내 견적서 PDF로 저장 (본인 보관용)"}
             </button>
             <button
-              onClick={saveToCloud}
+              onClick={saveEstimateLink}
               disabled={saveStatus === "saving"}
               className="w-full flex items-center justify-center gap-2 border border-teal-700 text-teal-700 text-sm font-medium py-3.5 rounded-full disabled:opacity-60"
             >
               <UserPlus className="w-4 h-4" />
               {!user
-                ? "자재리스트 저장 (로그인 필요)"
+                ? "내 견적서 링크로 저장 (로그인 필요)"
                 : saveStatus === "saving"
                 ? "저장 중..."
-                : saveStatus === "saved"
-                ? "저장 완료 ✓"
-                : "자재리스트 저장하기"}
+                : saveStatus === "error"
+                ? "저장 실패 · 다시 시도"
+                : "내 견적서 링크로 저장"}
             </button>
             <button
               onClick={shareMaterials}
@@ -1599,6 +1723,67 @@ export default function InteriorMaterialGame() {
           <div className="flex items-center justify-center gap-1.5 mt-8 pt-4 border-t border-stone-200">
             <img src={LOGO_SRC} alt="logo" className="w-4 h-4 object-contain opacity-70" />
             <span className="text-[11px] text-stone-400">진성은디자인</span>
+          </div>
+        </div>
+      )}
+
+      {savedLink && (
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-md p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold">내 견적서가 저장됐어요</h3>
+              <button onClick={() => { setSavedLink(null); setLinkCopied(false); }} className="text-stone-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-xs text-stone-500 leading-relaxed mb-3">
+              이 링크로 들어오면 지금 화면을 그대로 다시 볼 수 있어요. 사진을 눌러 상세 내용도 확인할 수 있습니다.
+            </p>
+            <div className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-[11px] font-mono break-all text-stone-700 mb-3">
+              {savedLink}
+            </div>
+            <div className="bg-teal-50 border border-teal-100 rounded-lg px-3 py-2.5 mb-4">
+              <p className="text-xs text-teal-800 leading-relaxed">
+                <b>금액이 들어있는 링크입니다.</b> 로그인한 본인만 열 수 있지만, 업체에는 보내지 마세요.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => setLinkCopied(await copyText(savedLink))}
+                className="flex-1 bg-stone-900 text-white text-sm font-medium py-3 rounded-full"
+              >
+                {linkCopied ? "복사됨 ✓" : "링크 복사하기"}
+              </button>
+              <button
+                onClick={() => { setSavedLink(null); setLinkCopied(false); }}
+                className="flex-1 border border-stone-200 text-stone-700 text-sm font-medium py-3 rounded-full"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {linkStatus === "loading" && (
+        <div className="fixed inset-0 bg-white/80 flex items-center justify-center z-50">
+          <p className="text-sm text-stone-500">저장된 견적서를 불러오는 중...</p>
+        </div>
+      )}
+
+      {linkStatus === "notfound" && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 text-center">
+            <p className="text-sm font-medium mb-2">견적서를 찾을 수 없어요</p>
+            <p className="text-xs text-stone-500 leading-relaxed mb-4">
+              링크가 잘못됐거나, 저장한 본인 계정으로 로그인하지 않았을 수 있어요.
+            </p>
+            <button
+              onClick={() => setLinkStatus("")}
+              className="w-full bg-stone-900 text-white text-sm font-medium py-3 rounded-full"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}
