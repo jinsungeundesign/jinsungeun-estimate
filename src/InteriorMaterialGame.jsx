@@ -646,6 +646,7 @@ export default function InteriorMaterialGame() {
   const [shared, setShared] = useState(false);
   // 복원이 끝나기 전에는 저장하지 않는다 (빈 상태로 덮어쓰는 것을 막기 위해)
   const [restored, setRestored] = useState(false);
+  const [returnToSummary, setReturnToSummary] = useState(false);
   const [pdfStatus, setPdfStatus] = useState(""); // "", "making", "done", "error"
   const [shareText, setShareText] = useState(null); // 공유 내용 미리보기
   const [savedLink, setSavedLink] = useState(null); // 저장 후 받은 내 견적서 링크
@@ -1107,10 +1108,22 @@ export default function InteriorMaterialGame() {
   }
   function advance() {
     setDetailItem(null);
+    setReturnToSummary(false);
     if (isLast) setPhase("summary");
     // 연속으로 눌렸을 때 마지막 단계를 넘어가지 않도록 상한을 둔다
     else setStepIdx((i) => Math.min(i + 1, visibleSteps.length - 1));
   }
+  // 견적 결과에서 특정 항목만 고치러 갈 때. 고치고 나면 결과로 바로 돌아올 수 있게 표시해둔다.
+  function editStep(stepId) {
+    const idx = visibleSteps.findIndex((s) => s.id === stepId);
+    if (idx < 0) return;
+    setDetailModal(null);
+    setStepIdx(idx);
+    setPhase("select");
+    setReturnToSummary(true);
+    window.scrollTo(0, 0);
+  }
+
   function goPrev() {
     setDetailItem(null);
     if (phase === "summary") {
@@ -1121,6 +1134,7 @@ export default function InteriorMaterialGame() {
     else setPhase("bathroom_count");
   }
   function restartAll() {
+    setReturnToSummary(false);
     setPhase("pyeong");
     setPyeong("");
     setBathroomCount("1");
@@ -1539,6 +1553,15 @@ export default function InteriorMaterialGame() {
               );
             })}
           </div>
+          )}
+
+          {returnToSummary && (
+            <button
+              onClick={() => { setReturnToSummary(false); setPhase("summary"); window.scrollTo(0, 0); }}
+              className="w-full mt-6 flex items-center justify-center gap-1.5 border border-teal-700 text-teal-700 text-sm font-medium py-3 rounded-full"
+            >
+              변경 완료 · 견적 결과로 돌아가기
+            </button>
           )}
 
           <div className="flex items-center justify-between mt-auto pt-8">
@@ -2016,6 +2039,13 @@ export default function InteriorMaterialGame() {
                   <div className="text-xs text-stone-500">{item.confidence} · 실제 견적과 다를 수 있음</div>
                 )}
               </div>
+
+              <button
+                onClick={() => editStep(s.id)}
+                className="w-full mt-5 bg-stone-900 text-white text-sm font-medium py-3.5 rounded-full"
+              >
+                이 항목 변경하기
+              </button>
             </div>
           </div>
         );
