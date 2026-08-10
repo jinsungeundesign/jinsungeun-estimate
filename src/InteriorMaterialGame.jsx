@@ -794,7 +794,7 @@ export default function InteriorMaterialGame() {
   // 업체에 보낼 자재리스트 — 금액은 일부러 빼고 자재명만 담는다
   function buildMaterialText() {
     const lines = [
-      "[진성은디자인 · 자재리스트]",
+      "[인테리어 자재리스트]",
       "─────────────────",
       `전용면적 ${pyeong}평 · 욕실 ${bathCount}개 · 컨셉: ${profile?.name || "-"}`,
     ];
@@ -897,11 +897,18 @@ export default function InteriorMaterialGame() {
         import("html2canvas"),
         import("jspdf"),
       ]);
-      const canvas = await html2canvas(sheet, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      });
+      const header = document.getElementById("pdf-header");
+      if (header) header.style.display = "flex";
+      let canvas;
+      try {
+        canvas = await html2canvas(sheet, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true,
+        });
+      } finally {
+        if (header) header.style.display = "none";
+      }
 
       const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
       const pageW = pdf.internal.pageSize.getWidth();
@@ -1514,6 +1521,13 @@ export default function InteriorMaterialGame() {
           </div>
 
           <div id="estimate-sheet" className="bg-stone-50 pt-1">
+          {/* PDF에만 들어가는 머리글 — 화면에는 이미 상단바가 있어 숨겨둔다 */}
+          <div id="pdf-header" style={{ display: "none" }} className="items-center gap-2 pb-3 mb-3 border-b border-stone-200">
+            <img src={LOGO_SRC} alt="" className="w-6 h-6 object-contain" />
+            <span className="text-sm font-bold tracking-tight text-stone-900">
+              진성은디자인 <span className="font-normal text-stone-400">— 세상에서 가장 편한 견적</span>
+            </span>
+          </div>
           <div className="flex items-center gap-1.5 mb-3">
             <Receipt className="w-4 h-4 text-teal-700" />
             <h2 className="text-sm font-bold text-stone-500 tracking-wide">견적서</h2>
@@ -1731,7 +1745,10 @@ export default function InteriorMaterialGame() {
         <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl w-full max-w-md p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold">내 견적서가 저장됐어요</h3>
+              <h3 className="font-bold flex items-center gap-2">
+                <img src={LOGO_SRC} alt="" className="w-5 h-5 object-contain" />
+                내 견적서가 저장됐어요
+              </h3>
               <button onClick={() => { setSavedLink(null); setLinkCopied(false); }} className="text-stone-400">
                 <X className="w-5 h-5" />
               </button>
@@ -1774,7 +1791,10 @@ export default function InteriorMaterialGame() {
       {linkStatus === "notfound" && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 text-center">
-            <p className="text-sm font-medium mb-2">견적서를 찾을 수 없어요</p>
+            <p className="text-sm font-medium mb-2 flex items-center justify-center gap-2">
+              <img src={LOGO_SRC} alt="" className="w-5 h-5 object-contain" />
+              견적서를 찾을 수 없어요
+            </p>
             <p className="text-xs text-stone-500 leading-relaxed mb-4">
               링크가 잘못됐거나, 저장한 본인 계정으로 로그인하지 않았을 수 있어요.
             </p>
@@ -1792,7 +1812,10 @@ export default function InteriorMaterialGame() {
         <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
-              <h3 className="font-bold">업체에 보낼 자재리스트</h3>
+              <h3 className="font-bold flex items-center gap-2">
+                <img src={LOGO_SRC} alt="" className="w-5 h-5 object-contain" />
+                업체에 보낼 자재리스트
+              </h3>
               <button onClick={() => setShareText(null)} className="text-stone-400">
                 <X className="w-5 h-5" />
               </button>
