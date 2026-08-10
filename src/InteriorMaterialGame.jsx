@@ -1191,6 +1191,11 @@ export default function InteriorMaterialGame() {
 
   // 하이엔드는 인건비·마감 노무비 편차가 커서 상한선이 의미가 없다.
   // 최소 이만큼은 들어간다는 하한선만 보여준다.
+  // 소셜 로그인 제공자마다 닉네임을 담는 필드 이름이 달라 순서대로 찾는다
+  const m = user?.user_metadata || {};
+  const nickname =
+    m.nickname || m.name || m.full_name || m.preferred_username || m.user_name || "";
+
   const minOnly = profile?.id === "highend";
   // 하이엔드는 하한선만 쓰므로 요율도 하나만 표시한다
   const pct = (r) => `${Math.round(r * 100)}%`;
@@ -1573,6 +1578,16 @@ export default function InteriorMaterialGame() {
 
       {phase === "summary" && (
         <div className="flex-1 px-5 pb-8">
+          {user && (
+            <div className="flex items-center gap-2 mb-3 px-3 py-2.5 bg-white border border-stone-200 rounded-xl">
+              <img src={LOGO_SRC} alt="" className="w-5 h-5 object-contain flex-shrink-0" />
+              <div className="text-xs leading-tight">
+                <span className="font-bold text-stone-900">{nickname || "고객"}</span>
+                <span className="text-stone-500">님의 견적서예요</span>
+                <div className="text-[10px] text-stone-400 mt-0.5">{user.email}</div>
+              </div>
+            </div>
+          )}
           <div className="text-xs text-stone-400 mb-5">
             {pyeong}평(전용) · 욕실 {bathroomCount}개 · {profile?.name}
             {sink ? ` · 싱크대 추정 ${sink.length}m` : ""}
@@ -1732,7 +1747,7 @@ export default function InteriorMaterialGame() {
               </div>
             {user && (
               <button onClick={signOut} className="w-full text-center text-xs text-stone-400 py-1">
-                {user.email}로 로그인됨 · 로그아웃
+                {nickname ? `${nickname}(${user.email})` : user.email} · 로그아웃
               </button>
             )}
           </div>
