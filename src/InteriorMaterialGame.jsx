@@ -225,9 +225,13 @@ const WALLPAPER_ITEMS = {
 
 // 욕실 타일공사도 컨셉에 따라 선택지가 달라진다 — 하이엔드는 포세린·유럽산만
 const BATH_TILE_PORCELAIN = { name: "올철거 후 포세린타일", price: "380만원 이상", detail: "포세린타일 600×1200 · 타일 약 75만원 + 떠붙임 인건비 210만원 + 부자재 60~75만원(트렌치·유가 포함) + 경비·식대·운반 35만원", image: BATH_PORCELAIN_IMG };
+const BATH_TILE_DUTBANG = { name: "덧방 시공", price: "100만원 이상", detail: "국산/수입 일반 도기질 300×600·300×300 타일 30~40만원 + 인건비 45만원(1품, 하루 1칸) + 부자재 15~20만원 + 경비·식대·운반 10만원", image: WATERPROOF_PATCH_IMG };
+
 const BATH_TILE_ITEMS = {
+  // 예산 중심형은 철거 범위를 최소화하는 컨셉이라 덧방만 제공한다
+  budget: [BATH_TILE_DUTBANG],
   standard: [
-    { name: "덧방 시공", price: "100만원 이상", detail: "국산/수입 일반 도기질 300×600·300×300 타일 30~40만원 + 인건비 45만원(1품, 하루 1칸) + 부자재 15~20만원 + 경비·식대·운반 10만원", image: WATERPROOF_PATCH_IMG },
+    BATH_TILE_DUTBANG,
     { name: "올철거(전면 재시공)", price: "185만원 이상", detail: "기존 타일 올철거 후 재시공 · 인건비 3품", image: WATERPROOF_FULL_IMG },
     BATH_TILE_PORCELAIN,
   ],
@@ -325,7 +329,7 @@ const STEPS = [
     note: "욕실 한 칸 기준 · 타일 + 인건비 + 부자재 + 경비 합계",
     defaultIndexByProfile: { budget: 0, common: 1, highend: 0 },
     itemsByProfile: {
-      budget: BATH_TILE_ITEMS.standard,
+      budget: BATH_TILE_ITEMS.budget,
       common: BATH_TILE_ITEMS.standard,
       highend: BATH_TILE_ITEMS.highend,
     },
@@ -1065,10 +1069,19 @@ export default function InteriorMaterialGame() {
       }
     }
   }
+  // 욕실 항목은 욕실 칸수보다 많이 고를 수 없다 (2칸이면 합계 2개까지)
+  function bathPicked(arr) {
+    return (arr || []).reduce((n, i) => n + (i.count || 1), 0);
+  }
+  function bathFull(arr) {
+    return BATHROOM_STEP_IDS.has(step?.id) && step?.type === "multi" && bathPicked(arr) >= bathCount;
+  }
+
   function toggleMulti(item) {
     setSelections((s) => {
       const arr = s[step.id] || [];
       const exists = arr.find((i) => i.name === item.name);
+      if (!exists && bathFull(arr)) return s; // 칸수를 넘겨 고르는 것을 막는다
       const next = exists
         ? arr.filter((i) => i.name !== item.name)
         : [...arr, (item.perCount || showsCount(step)) ? { ...item, count: 1 } : item];
@@ -1095,6 +1108,7 @@ export default function InteriorMaterialGame() {
   function changeMultiCount(item, delta) {
     setSelections((s) => {
       const arr = s[step.id] || [];
+      if (delta > 0 && bathFull(arr)) return s; // 칸수를 넘기지 않는다
       const next = arr
         .map((i) => (i.name === item.name ? { ...i, count: Math.max(1, (i.count || 1) + delta) } : i))
         .filter(Boolean);
@@ -1358,7 +1372,7 @@ export default function InteriorMaterialGame() {
               }>
                 선택 <span className="font-mono font-semibold">{picked}칸</span> / 욕실 <span className="font-mono font-semibold">{bathCount}칸</span>
                 {matched
-                  ? ""
+                  ? " · 다 골랐어요"
                   : skipped
                   ? " · 이 항목은 안 하는 걸로 진행돼요"
                   : items.length === 1
@@ -1420,9 +1434,15 @@ export default function InteriorMaterialGame() {
               {items.map((item) => {
                 const picked = currentMulti.find((i) => i.name === item.name);
                 const selected = !!picked;
+                // 욕실 칸수를 다 채웠으면 나머지는 고를 수 없다는 걸 눈에 보이게 한다
+                const blocked = !selected && bathFull(currentMulti);
                 return (
                   <div key={item.name} className="flex flex-col">
-                    <button onClick={() => toggleMulti(item)} className="text-left">
+                    <button
+                      onClick={() => toggleMulti(item)}
+                      disabled={blocked}
+                      className={"text-left " + (blocked ? "opacity-40" : "")}
+                    >
                       <div
                         className={
                           "aspect-square rounded-2xl overflow-hidden flex items-center justify-center relative transition-all " +
