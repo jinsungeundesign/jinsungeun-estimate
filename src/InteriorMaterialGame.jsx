@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, leadsSupabase } from "./supabaseClient";
 import {
   Hammer,
   Droplets,
@@ -899,17 +899,39 @@ export default function InteriorMaterialGame() {
     }
   }
 
+  // 상담기록에 남길 요약. 견적 앱과 달리 현장관리는 사장님·직원만 보는 화면이라
+  // 자재리스트와 달리 금액을 그대로 넣는다.
+  function buildLeadNote() {
+    const lines = [
+      "[견적 앱에서 접수된 문의]",
+      `${pyeong}평(전용) · 욕실 ${bathCount}개 · ${profile?.name || "-"}`,
+      `예상 총액: ${minOnly ? `${won(grandLo)}만원 이상` : `${won(grandLo)}~${won(grandHi)}만원`} (부가세 별도)`,
+    ];
+    if (inq.startDate) lines.push(`공사 시작 희망일: ${inq.startDate}`);
+    if (inq.moveInDate) lines.push(`입주 예정일: ${inq.moveInDate}`);
+    lines.push("", "선택 항목:");
+    flatEntries.forEach(({ step: s, item, mult }) => {
+      const count = item.count > 1 ? ` ×${item.count}` : "";
+      const rooms = mult > 1 ? ` (욕실 ${mult}개 반영)` : "";
+      lines.push(`· ${s.name}: ${item.name}${count}${rooms}`);
+    });
+    return lines.join("\n");
+  }
+
   // 문의 내용을 저장한다. 방금 만든 견적(평수·컨셉·선택항목·총액)이 같이 붙어서
   // 상담 시작부터 무슨 공사인지 다 보인다.
+  // 이 앱 자체 기록과는 별개로, 현장관리(hyunjang-ops)의 고객관리 화면에도
+  // 잠재고객으로 바로 넣는다 — 현장관리 쪽 실패는 문의 접수 자체를 막지 않는다.
   async function submitInquiry(e) {
     e?.preventDefault();
     if (!supabase) return setInqStatus("error");
     if (!inq.phone.trim() || !inq.address.trim()) return;
     setInqStatus("sending");
+    const fullAddress = [inq.address.trim(), inq.addressDetail.trim()].filter(Boolean).join(" ");
     const { error } = await supabase.from("inquiries").insert({
       name: inq.name.trim() || null,
       phone: inq.phone.trim(),
-      address: [inq.address.trim(), inq.addressDetail.trim()].filter(Boolean).join(" "),
+      address: fullAddress,
       start_date: inq.startDate || null,
       move_in_date: inq.moveInDate || null,
       pyeong: pyeong || null,
@@ -924,6 +946,15 @@ export default function InteriorMaterialGame() {
       console.error(error);
       setInqStatus("error");
       return;
+    }
+    if (leadsSupabase) {
+      const { error: leadError } = await leadsSupabase.rpc("create_lead_from_estimate", {
+        p_name: inq.name.trim() || null,
+        p_phone: inq.phone.trim(),
+        p_address: fullAddress,
+        p_note: buildLeadNote(),
+      });
+      if (leadError) console.error("잠재고객 등록 실패(문의 접수는 정상):", leadError);
     }
     setInqStatus("sent");
   }
