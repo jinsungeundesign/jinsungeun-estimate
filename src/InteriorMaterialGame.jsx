@@ -410,7 +410,8 @@ const STEPS = [
       { name: "6대", price: "780~920만원", detail: "실외기 2대(예: 4대용 + 2대용) 또는 대용량 단일 실외기", image: SYSTEM_AC_IMG },
       { name: "7대", price: "930~1100만원", detail: "실외기 2대(예: 4대용 + 3대용)", image: SYSTEM_AC_IMG },
     ]},
-  { id: "ceiling_drop", name: "단내림", icon: Layers, type: "select", question: "에어컨 실내기 설치를 위한 단내림이 필요한가요?", note: "개당 단가 · 필요한 개소 수를 선택하세요 · 디자인 설계에 따라 금액이 달라져요",
+  // 시스템에어컨을 안 하면 실내기가 없으니 단내림도 물어볼 필요가 없다
+  { id: "ceiling_drop", name: "단내림", icon: Layers, type: "select", showIf: (sel) => !!sel.system_ac, question: "에어컨 실내기 설치를 위한 단내림이 필요한가요?", note: "개당 단가 · 필요한 개소 수를 선택하세요 · 디자인 설계에 따라 금액이 달라져요",
     items: [
       { name: "필요", price: "40~65만원", perCount: true, detail: "개당 · 목공 단내림 작업 추가 · 디자인 설계에 따라 달라짐", image: DROP_NEED_IMG },
       { name: "불필요", price: "0원", detail: "기존 구조로 설치 가능", image: DROP_NOTNEED_IMG },
