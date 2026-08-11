@@ -1984,7 +1984,8 @@ export default function InteriorMaterialGame() {
           <div className="mt-8 pt-6 border-t border-stone-200 no-print">
             <div className="bg-stone-900 text-white rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
-                <img src={LOGO_SRC} alt="" className="w-5 h-5 object-contain" />
+                {/* 로고 원본이 검정이라 어두운 카드 위에서는 안 보여서, 흰색으로 반전해서 쓴다 */}
+                <img src={LOGO_SRC} alt="" className="w-5 h-5 object-contain" style={{ filter: "brightness(0) invert(1)" }} />
                 <span className="text-sm font-bold tracking-tight">진성은디자인</span>
               </div>
               <p className="text-xs text-stone-300 leading-relaxed mb-4">
