@@ -954,6 +954,9 @@ export default function InteriorMaterialGame() {
         import("html2canvas"),
         import("jspdf"),
       ]);
+      // 화면을 그림으로 떠서 PDF를 만들기 때문에, 글꼴을 다 받기 전에 찍으면
+      // PDF만 다른 글씨체로 나온다. 준비될 때까지 기다린다.
+      if (document.fonts?.ready) await document.fonts.ready;
       const header = document.getElementById("pdf-header");
       if (header) header.style.display = "flex";
       let canvas;
