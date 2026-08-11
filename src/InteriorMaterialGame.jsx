@@ -521,6 +521,17 @@ const SINK_LENGTH_BRACKETS = [
   { max: Infinity, coef: 0.15, base: 1.8, layout: "대면형 11자 + 키큰장/냉장고장" },
 ];
 
+// 공급면적(분양면적)으로 입력하면 전용면적으로 환산 — 아파트 기준 통상 비율(75%) 적용.
+// 모든 견적 계산은 전용면적 기준이라, 입력 방식과 무관하게 여기서 한 번에 정리한다.
+const SUPPLY_TO_EXCLUSIVE_RATIO = 0.75;
+
+function exclusiveAreaFromInput(raw, areaType) {
+  const n = Number(raw);
+  if (!raw || !Number.isFinite(n) || n <= 0) return "";
+  if (areaType !== "supply") return raw;
+  return String(Math.round(n * SUPPLY_TO_EXCLUSIVE_RATIO * 10) / 10);
+}
+
 function sinkLengthFor(pyeong) {
   const p = Number(pyeong);
   if (!p || p <= 0) return null;
@@ -672,7 +683,9 @@ function KakaoIcon() {
 
 export default function InteriorMaterialGame() {
   const [phase, setPhase] = useState("pyeong");
-  const [pyeong, setPyeong] = useState("");
+  const [pyeong, setPyeong] = useState(""); // 항상 전용면적 기준 — 계산은 전부 이 값을 쓴다
+  const [areaType, setAreaType] = useState("exclusive"); // "exclusive" | "supply" — 첫 화면 입력 방식만 구분
+  const [areaRaw, setAreaRaw] = useState(""); // 사용자가 실제로 타이핑한 숫자(전용이든 공급이든 그대로)
   const [bathroomCount, setBathroomCount] = useState("1");
   const [profile, setProfile] = useState(null);
   const [stepIdx, setStepIdx] = useState(0);
@@ -1294,6 +1307,8 @@ export default function InteriorMaterialGame() {
     setReturnToSummary(false);
     setPhase("pyeong");
     setPyeong("");
+    setAreaType("exclusive");
+    setAreaRaw("");
     setBathroomCount("1");
     setProfile(null);
     setStepIdx(0);
@@ -1415,20 +1430,52 @@ export default function InteriorMaterialGame() {
           </div>
           <Ruler className="w-5 h-5 text-teal-700 mb-4" />
           <h1 className="text-xl font-bold mb-1 leading-snug">공간이 몇 평인가요?</h1>
-          <p className="text-sm text-stone-400 mb-1">평수에 맞춰 이후 견적 범위를 잡아드려요</p>
-          <p className="text-xs text-teal-700 font-medium mb-8">
-            공급면적(분양면적)이 아닌 <b>전용면적 기준</b>으로 입력해주세요
-          </p>
+          <p className="text-sm text-stone-400 mb-6">평수에 맞춰 이후 견적 범위를 잡아드려요</p>
+
+          <div className="flex bg-stone-100 rounded-full p-1 mb-6">
+            {[
+              { id: "exclusive", label: "전용면적" },
+              { id: "supply", label: "공급면적(분양면적)" },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setAreaType(t.id);
+                  setPyeong(exclusiveAreaFromInput(areaRaw, t.id));
+                }}
+                className={`flex-1 text-xs font-medium py-2.5 rounded-full transition-colors ${
+                  areaType === t.id ? "bg-stone-900 text-white" : "text-stone-500"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
           <input
             type="number"
             inputMode="numeric"
-            value={pyeong}
-            onChange={(e) => setPyeong(e.target.value)}
+            value={areaRaw}
+            onChange={(e) => {
+              setAreaRaw(e.target.value);
+              setPyeong(exclusiveAreaFromInput(e.target.value, areaType));
+            }}
             placeholder="32"
             autoFocus
             className="w-full border-b-2 border-stone-200 focus:border-teal-700 outline-none text-3xl font-mono py-2 mb-1 bg-transparent"
           />
-          <span className="text-sm text-stone-400 mb-10">평 (전용면적)</span>
+          <span className="text-sm text-stone-400 mb-1">평 ({areaType === "supply" ? "공급면적" : "전용면적"})</span>
+          {areaType === "supply" && (
+            <p className="text-xs text-teal-700 font-medium mt-1 mb-9">
+              {pyeong ? (
+                <>전용면적 약 <b>{pyeong}평</b>으로 계산돼요 (공급면적의 {Math.round(SUPPLY_TO_EXCLUSIVE_RATIO * 100)}%)</>
+              ) : (
+                "공급면적을 입력하면 전용면적으로 자동 환산해요"
+              )}
+            </p>
+          )}
+          {areaType !== "supply" && <div className="mb-9" />}
+
           <button
             onClick={() => setPhase("bathroom_count")}
             disabled={!pyeong}
