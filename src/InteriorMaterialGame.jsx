@@ -1358,6 +1358,8 @@ export default function InteriorMaterialGame() {
         bathroom_count: Number(bathroomCount) || null,
         profile_id: profile.id,
         selections: compactSelections(selections),
+        // 누구인지는 담지 않고 로그인 여부만 — 회원/비회원 이용 비율을 보려는 용도
+        is_member: !!user,
       })
       .then(({ error }) => {
         if (error) console.error(`익명 통계 기록 실패(${eventType}):`, error);
