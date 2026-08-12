@@ -292,7 +292,7 @@ const STEPS = [
     ]},
   { id: "sash", name: "샷시(창호)", icon: Blinds, type: "select", question: "샷시(창호) 교체하시나요?",
     items: [
-      { name: "뷰프레임", price: "전용면적 평당 55만원", detail: "LX하우시스 · 10년 보증 · 비교적 고가, 브랜드 가치값", image: SASH1_IMG },
+      { name: "뷰프레임", price: "전용면적 평당 55~60만원", detail: "LX하우시스 · 10년 보증 · 비교적 고가, 브랜드 가치값", image: SASH1_IMG },
       { name: "KCC / 영림", price: "전용면적 평당 45~50만원", detail: "13년 이상 보증 · 뷰프레임 대비 저렴하나 성능차 미미해 많이 선택", image: SASH2_IMG },
       { name: "공업사", price: "전용면적 평당 35~40만원", detail: "대리점 자체보증 · 브랜드 대비 저렴하나 품질보증이 어려운 게 단점", image: SASH3_IMG },
       { name: "필름랩핑", price: "전용면적 평당 8~10만원", detail: "창문에 큰 문제가 없을 때, 샷시는 그대로 두고 낡은 부분만 필름으로 커버", image: SASH4_IMG },
@@ -1207,8 +1207,21 @@ export default function InteriorMaterialGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, stepIdx, profile?.id]);
 
+  // 단내림은 보통 실내기 1대당 1개소라, 시스템에어컨에서 고른 대수를 기본 개수로 미리 채워준다.
+  // 손님이 실제로는 다르게 필요하면 +/- 로 직접 조절하면 된다.
+  function defaultPerCount(stepId) {
+    if (stepId === "ceiling_drop") {
+      const acCount = parseInt(selections.system_ac?.name, 10);
+      if (acCount > 0) return acCount;
+    }
+    return 1;
+  }
+
   function select(item) {
-    setSelections((s) => ({ ...s, [step.id]: item.perCount ? { ...item, count: 1 } : item }));
+    setSelections((s) => ({
+      ...s,
+      [step.id]: item.perCount ? { ...item, count: defaultPerCount(step.id) } : item,
+    }));
     if (step.id === "demolition") {
       const matched = PROFILES.find((p) => p.id === item.profileId);
       if (matched && matched.id !== profile?.id) {
@@ -1757,6 +1770,11 @@ export default function InteriorMaterialGame() {
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
+                  </div>
+                )}
+                {selected && item.perCount && step.id === "ceiling_drop" && selections.system_ac && (
+                  <div className="text-[10px] text-stone-400 text-center mt-1">
+                    시스템에어컨 {selections.system_ac.name}에 맞춰 미리 채웠어요 · 다르면 직접 조절하세요
                   </div>
                 )}
                 </div>
