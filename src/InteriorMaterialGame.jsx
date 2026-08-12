@@ -882,6 +882,7 @@ export default function InteriorMaterialGame() {
       return;
     }
     setSaveStatus("saved");
+    logEstimateEvent("save_link");
     setSavedLink(`${window.location.origin}/?e=${data.id}`);
   }
 
@@ -1091,6 +1092,7 @@ export default function InteriorMaterialGame() {
       try {
         await navigator.share({ title: "진성은디자인 자재리스트", text });
         setShared(true);
+        logEstimateEvent("share_materials");
         return;
       } catch (e) {
         if (e.name === "AbortError") return; // 사용자가 공유창을 닫은 것뿐
@@ -1098,7 +1100,9 @@ export default function InteriorMaterialGame() {
     }
     // PC에는 공유창이 없으므로 내용을 눈으로 확인하고 복사할 수 있게 보여준다
     setShareText(text);
-    setShared(await copyText(text));
+    const copied = await copyText(text);
+    setShared(copied);
+    if (copied) logEstimateEvent("share_materials");
   }
 
   // 금액이 들어간 견적서를 PDF 파일로 바로 내려받는다.
@@ -1172,6 +1176,7 @@ export default function InteriorMaterialGame() {
       const today = new Date().toISOString().slice(0, 10);
       pdf.save(`진성은디자인_견적서_${pyeong}평_${today}.pdf`);
       setPdfStatus("done");
+      logEstimateEvent("pdf_export");
       setTimeout(() => setPdfStatus(""), 2500);
     } catch (e) {
       console.error(e);
@@ -1339,26 +1344,35 @@ export default function InteriorMaterialGame() {
   }
 
   // 이후 브랜드 협찬·광고 제안에 쓸 익명 통계 — 이름·연락처 등 개인정보는 전혀 담지 않는다.
+  // event_type으로 "결과 화면 도달 / PDF 내보내기 / 링크 저장 / 업체 공유"를 구분해서
+  // 현장관리 쪽에서 각 버튼이 실제로 얼마나 쓰이는지(전환 현황) 볼 수 있게 한다.
+  // 자재 선택 비율 집계는 summary_view 한 종류만 세므로, 한 사람이 여러 버튼을
+  // 눌러도 자재 통계가 중복으로 부풀지 않는다.
+  function logEstimateEvent(eventType) {
+    if (!supabase || !pyeong || !profile) return;
+    supabase
+      .from("estimate_events")
+      .insert({
+        event_type: eventType,
+        pyeong: Number(pyeong) || null,
+        bathroom_count: Number(bathroomCount) || null,
+        profile_id: profile.id,
+        selections: compactSelections(selections),
+      })
+      .then(({ error }) => {
+        if (error) console.error(`익명 통계 기록 실패(${eventType}):`, error);
+      });
+  }
+
   // 견적 결과 화면에 도달할 때마다 그 시점의 선택 내용을 한 번 기록하고,
   // 값이 안 바뀌었으면(같은 렌더 반복) 다시 보내지 않는다.
   const analyticsSentRef = useRef("");
   useEffect(() => {
-    if (phase !== "summary" || !supabase || !pyeong || !profile) return;
-    const compact = compactSelections(selections);
-    const snapshot = JSON.stringify({ pyeong, bathroomCount, profileId: profile.id, compact });
+    if (phase !== "summary" || !pyeong || !profile) return;
+    const snapshot = JSON.stringify({ pyeong, bathroomCount, profileId: profile.id, selections });
     if (analyticsSentRef.current === snapshot) return;
     analyticsSentRef.current = snapshot;
-    supabase
-      .from("estimate_events")
-      .insert({
-        pyeong: Number(pyeong) || null,
-        bathroom_count: Number(bathroomCount) || null,
-        profile_id: profile.id,
-        selections: compact,
-      })
-      .then(({ error }) => {
-        if (error) console.error("익명 통계 기록 실패:", error);
-      });
+    logEstimateEvent("summary_view");
   }, [phase, pyeong, bathroomCount, profile, selections]);
 
   // 견적 합산: multi 타입은 배열 내 항목마다(개수 반영) 합산, 욕실 관련 항목은 욕실 개수만큼 추가 반영
