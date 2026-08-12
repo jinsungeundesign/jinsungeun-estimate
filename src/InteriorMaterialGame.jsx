@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase, leadsSupabase } from "./supabaseClient";
 import {
   Hammer,
@@ -717,6 +717,9 @@ export default function InteriorMaterialGame() {
     moveInDate: "",
   });
   const setInqField = (k, v) => setInq((s) => ({ ...s, [k]: v }));
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [privacyTouched, setPrivacyTouched] = useState(false); // 동의 안 하고 제출 눌렀을 때만 안내 표시
 
   // 새로고침이나 소셜 로그인(페이지가 통째로 다시 열림) 후에도 진행하던 견적을 그대로 이어간다
   useEffect(() => {
@@ -938,6 +941,10 @@ export default function InteriorMaterialGame() {
   async function submitInquiry(e) {
     e?.preventDefault();
     if (!supabase) return setInqStatus("error");
+    if (!agreePrivacy) {
+      setPrivacyTouched(true);
+      return;
+    }
     if (!inq.phone.trim() || !inq.address.trim()) return;
     setInqStatus("sending");
     const fullAddress = [inq.address.trim(), inq.addressDetail.trim()].filter(Boolean).join(" ");
@@ -954,6 +961,7 @@ export default function InteriorMaterialGame() {
       total_low: Math.round(grandLo),
       total_high: minOnly ? null : Math.round(grandHi),
       user_id: user?.id || null,
+      privacy_agreed: true,
     });
     if (error) {
       console.error(error);
@@ -1329,6 +1337,29 @@ export default function InteriorMaterialGame() {
     setDetailItem(null);
     setDetailModal(null);
   }
+
+  // 이후 브랜드 협찬·광고 제안에 쓸 익명 통계 — 이름·연락처 등 개인정보는 전혀 담지 않는다.
+  // 견적 결과 화면에 도달할 때마다 그 시점의 선택 내용을 한 번 기록하고,
+  // 값이 안 바뀌었으면(같은 렌더 반복) 다시 보내지 않는다.
+  const analyticsSentRef = useRef("");
+  useEffect(() => {
+    if (phase !== "summary" || !supabase || !pyeong || !profile) return;
+    const compact = compactSelections(selections);
+    const snapshot = JSON.stringify({ pyeong, bathroomCount, profileId: profile.id, compact });
+    if (analyticsSentRef.current === snapshot) return;
+    analyticsSentRef.current = snapshot;
+    supabase
+      .from("estimate_events")
+      .insert({
+        pyeong: Number(pyeong) || null,
+        bathroom_count: Number(bathroomCount) || null,
+        profile_id: profile.id,
+        selections: compact,
+      })
+      .then(({ error }) => {
+        if (error) console.error("익명 통계 기록 실패:", error);
+      });
+  }, [phase, pyeong, bathroomCount, profile, selections]);
 
   // 견적 합산: multi 타입은 배열 내 항목마다(개수 반영) 합산, 욕실 관련 항목은 욕실 개수만큼 추가 반영
   const bathCount = Math.max(1, Number(bathroomCount) || 1);
@@ -2185,6 +2216,31 @@ export default function InteriorMaterialGame() {
                   <span>날짜는 대략만 적으셔도 됩니다. 일정에 맞춰 공정을 짜는 데만 씁니다.</span>
                 </div>
 
+                <label className="flex items-start gap-2 mt-5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreePrivacy}
+                    onChange={(e) => {
+                      setAgreePrivacy(e.target.checked);
+                      if (e.target.checked) setPrivacyTouched(false);
+                    }}
+                    className="mt-0.5 w-4 h-4 accent-teal-600 flex-shrink-0"
+                  />
+                  <span className="text-xs text-stone-500 leading-relaxed">
+                    (필수) 상담을 위한 개인정보 수집·이용에 동의합니다.{" "}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); setShowPrivacyPolicy(true); }}
+                      className="text-stone-700 underline underline-offset-2"
+                    >
+                      내용 보기
+                    </button>
+                  </span>
+                </label>
+                {privacyTouched && !agreePrivacy && (
+                  <div className="text-[11px] text-teal-700 mt-1.5">동의하셔야 문의를 접수할 수 있어요.</div>
+                )}
+
                 {inqStatus === "error" && (
                   <div className="text-xs text-stone-600 bg-stone-100 rounded-lg px-3 py-2.5 mt-4 leading-relaxed">
                     접수에 실패했어요. 잠시 후 다시 시도하시거나 {COMPANY_TEL}로 연락 주세요.
@@ -2209,6 +2265,58 @@ export default function InteriorMaterialGame() {
                 </a>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {showPrivacyPolicy && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end sm:items-center justify-center no-print" onClick={() => setShowPrivacyPolicy(false)}>
+          <div
+            className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[85vh] overflow-auto p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-base font-bold tracking-tight">개인정보 수집·이용 안내</span>
+              <button onClick={() => setShowPrivacyPolicy(false)} className="text-stone-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4 text-xs text-stone-600 leading-relaxed">
+              <div>
+                <div className="font-medium text-stone-800 mb-1">수집 항목</div>
+                <p>이름, 연락처, 공사 현장 주소, 공사 시작 희망일, 입주 예정일, 견적 문의 시 선택하신 견적 내용(평수·컨셉·항목)</p>
+              </div>
+              <div>
+                <div className="font-medium text-stone-800 mb-1">수집·이용 목적</div>
+                <p>공사 견적 상담 및 문의 응대, 상담 이력 관리</p>
+              </div>
+              <div>
+                <div className="font-medium text-stone-800 mb-1">보유·이용 기간</div>
+                <p>상담 완료 후 3년간 보관 후 파기합니다. 삭제를 원하시면 아래 연락처로 요청하실 수 있으며, 요청 즉시 삭제합니다.</p>
+              </div>
+              <div>
+                <div className="font-medium text-stone-800 mb-1">제3자 제공</div>
+                <p>입력하신 정보는 진성은디자인 내부 상담·현장관리 목적으로만 사용하며, 외부 업체나 제3자에게 제공하지 않습니다.</p>
+              </div>
+              <div>
+                <div className="font-medium text-stone-800 mb-1">동의 거부 권리 및 불이익</div>
+                <p>동의를 거부하실 수 있으나, 동의하지 않으실 경우 견적 문의 접수가 어렵습니다.</p>
+              </div>
+              <div>
+                <div className="font-medium text-stone-800 mb-1">열람·정정·삭제 요청</div>
+                <p>
+                  본인의 개인정보에 대한 열람, 정정, 삭제, 처리정지를 원하시면 아래로 연락 주세요.
+                  <br />
+                  진성은디자인 · {COMPANY_TEL}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowPrivacyPolicy(false)}
+              className="w-full bg-stone-900 text-white text-sm font-medium py-3.5 rounded-full mt-6"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}
