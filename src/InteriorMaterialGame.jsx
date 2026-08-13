@@ -373,8 +373,8 @@ const STEPS = [
     ]},
   { id: "upper_cabinet", name: "[욕실] 상부장", icon: ShowerHead, type: "multi", question: "욕실 상부장은 어떻게 할까요?", confidence: "추정치",
     items: [
-      { name: "기성품", price: "15~30만원", image: UPPER_CABINET_STOCK_IMG },
-      { name: "커스텀제작", price: "40~80만원", image: UPPER_CABINET_CUSTOM_IMG },
+      { name: "기성품", price: "15~30만원", detail: "가성비 좋음, 재고 운영 방식이라 공사 기간 단축 · 대신 맞춤 제작은 불가능", image: UPPER_CABINET_STOCK_IMG },
+      { name: "커스텀제작", price: "40~80만원", detail: "맞춤 제작이라 고급스럽고 수납 구성이 자유로움 · 대신 기성품 대비 비싸고 제작 기간이 소요됨", image: UPPER_CABINET_CUSTOM_IMG },
     ]},
   { id: "sink", name: "[욕실] 세면대", icon: ShowerHead, type: "multi", question: "세면대는 어떤 타입으로 할까요?", note: "개당 단가",
     items: [
