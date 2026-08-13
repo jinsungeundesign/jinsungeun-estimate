@@ -328,15 +328,15 @@ const STEPS = [
     ]},
   { id: "kitchen_cabinet", name: "싱크대", icon: UtensilsCrossed, type: "select", question: "싱크대는 어떤 방식으로 할까요?", note: "평수로 추정한 싱크대 길이 × 미터당 단가 · 인조대리석 상판 포함가",
     items: [
-      { name: "보급형 사제(비브랜드)", price: "M당 80~100만원", unit: "sink_m", detail: "인조대리석 상판 기준", image: SINK_CUSTOM_IMG },
-      { name: "브랜드(한샘)", price: "M당 100~130만원", unit: "sink_m", detail: "인조대리석 상판 기준", image: SINK_HANSSEM_IMG },
-      { name: "하이엔드커스텀", price: "M당 200만원 이상", unit: "sink_m", confidence: "추정치", image: SINK_HIGHEND_IMG },
+      { name: "보급형 사제(비브랜드)", price: "M당 80~100만원", unit: "sink_m", detail: "인조대리석 상판 기준 · 가성비 좋음 · 대신 업체마다 마감 차이가 있고, 특수 하드웨어나 복잡한 구조는 비용이 크게 뛸 수 있음(업체 재량) · AS도 업체마다 다름", image: SINK_CUSTOM_IMG },
+      { name: "브랜드(한샘)", price: "M당 100~130만원", unit: "sink_m", detail: "인조대리석 상판 기준 · 규격화된 품질과 서비스, AS 편리 · 대신 비규격 사양은 비용이 크게 뛸 수 있고, 설계자마다 마감 차이가 있음", image: SINK_HANSSEM_IMG },
+      { name: "하이엔드커스텀", price: "M당 200만원 이상", unit: "sink_m", detail: "복잡한 구조도 가능, 하드웨어·마감재를 자유롭게 선택하는 진짜 맞춤 가구 · 대신 가격이 비쌈", confidence: "추정치", image: SINK_HIGHEND_IMG },
     ]},
   { id: "kitchen_countertop", name: "싱크대상판", icon: LayoutGrid, type: "select", question: "싱크대 상판은 어떤 소재로 할까요?", note: "싱크대 기본가에 인조대리석이 포함되어 있어, 상위 소재는 차액만 더해져요",
     items: [
-      { name: "인조대리석(하이막스)", price: "추가비용 없음", detail: "싱크대 기본 사양", image: COUNTER_MARBLE_IMG },
-      { name: "엔지니어드스톤(칸스톤)", price: "M당 35만원", unit: "sink_m", detail: "인조대리석 대비 추가금 · 가공·물류·시공비 포함", image: COUNTER_ENGSTONE_IMG },
-      { name: "세라믹", price: "M당 60만원", unit: "sink_m", detail: "인조대리석 대비 추가금", confidence: "추정치", image: COUNTER_CERAMIC_IMG },
+      { name: "인조대리석(하이막스)", price: "추가비용 없음", detail: "싱크대 기본 사양 · 베스트셀러 · 이음매 안 보이게 시공 가능 · 다양한 컬러 · 솔리드 소재라 갈아내면서 쓰면 새것처럼 복원 가능 · 대신 기스가 잘 나고, 뜨거운 것 올리면 깨지기 쉬우며, 기스에 오염물이 낄 수 있고, 인조대리석 티가 남", image: COUNTER_MARBLE_IMG },
+      { name: "엔지니어드스톤(칸스톤)", price: "M당 35만원", unit: "sink_m", detail: "인조대리석 대비 추가금 · 가공·물류·시공비 포함 · 인조대리석의 단점을 보완해 기스·파손에 강함 · 대신 이음매는 실리콘 처리, 가격대가 애매함", image: COUNTER_ENGSTONE_IMG },
+      { name: "세라믹", price: "M당 60만원", unit: "sink_m", detail: "인조대리석 대비 추가금 · 가장 예쁘고 위생적, 경도가 우수해 기스가 안 나고 뜨거운 냄비를 올려도 됨 · 대신 이음매 티가 나고, 무거운 냄비로 세게 치면 깨질 수 있으며, 비쌈", confidence: "추정치", image: COUNTER_CERAMIC_IMG },
     ]},
   { id: "sink_bowl", name: "싱크볼", icon: UtensilsCrossed, type: "select", question: "싱크볼은 무엇으로 할까요?", note: "제품 판매가 기준 · 설치비 별도",
     items: [
