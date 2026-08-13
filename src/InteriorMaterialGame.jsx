@@ -341,13 +341,13 @@ const STEPS = [
   { id: "sink_bowl", name: "싱크볼", icon: UtensilsCrossed, type: "select", question: "싱크볼은 무엇으로 할까요?", note: "제품 판매가 기준 · 설치비 별도",
     items: [
       { name: "원앙 한스 TZN 850", price: "22만원", detail: "엠보 나노코팅 사각싱크볼 · 배송비 포함", image: SINKBOWL_WONYANG_IMG },
-      { name: "백조 깜뽀르테 860", price: "49만원", detail: "CFCEQ860 엠보코팅 사각싱크볼 · 무료배송", image: SINKBOWL_BAEKJO_IMG },
+      { name: "백조 깜뽀르테 860", price: "49만원", detail: "베스트셀러 · CFCEQ860 엠보코팅 사각싱크볼 · 무료배송", image: SINKBOWL_BAEKJO_IMG },
       { name: "블랑코 CLARON 850-U", price: "121만원", detail: "독일산 10R 사각싱크볼 · 무료배송", image: SINKBOWL_BLANCO_IMG },
     ]},
   { id: "sink_faucet", name: "싱크수전", icon: Droplets, type: "select", question: "싱크수전은 무엇으로 할까요?", note: "제품 판매가 기준 · 설치비 별도",
     items: [
       { name: "대림바스 DL-K2115SN", price: "5.8만원", detail: "원홀 스텐 무광니켈 · 3기능 스프레이헤드 · 배송비 포함", image: FAUCET_DAELIM_IMG },
-      { name: "필로토 슈티에싱크 80988", price: "55.8만원", detail: "무광니켈 · 무료배송", image: FAUCET_PILOTO_IMG },
+      { name: "필로토 슈티에싱크 80988", price: "55.8만원", detail: "베스트셀러 · 무광니켈 · 무료배송", image: FAUCET_PILOTO_IMG },
       { name: "그로헤 K7 32950DC0", price: "166만원", detail: "슈퍼스틸 · 무료배송", image: FAUCET_GROHE_IMG },
     ]},
   { id: "front_door_partition", name: "중문", icon: DoorClosed, type: "addon", question: "중문을 설치할까요?", note: "거실·주방 등 집마다 0~2개소 필요할 수 있어요",
