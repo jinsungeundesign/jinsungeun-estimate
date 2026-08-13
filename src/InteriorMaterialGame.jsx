@@ -321,10 +321,10 @@ const STEPS = [
     items: WALLPAPER_ITEMS.budget },
   { id: "flooring", name: "바닥재", icon: SquareStack, type: "select", question: "바닥재는 무엇으로 할까요?", note: "전용면적 평당 자재+시공 기준",
     items: [
-      { name: "강마루(동화마루 그란데)", price: "평당 11~14만원", detail: "베스트 아이템 · 가장 무난하고 많이 선택하는 바닥재", image: FLOOR_GRANDE_IMG },
+      { name: "강마루(동화마루 그란데)", price: "평당 11~14만원", detail: "베스트 아이템 · 가장 무난하고 많이 선택 · 원목마루 대비 스크래치·찍힘에 강함 · 가성비 좋음 · 필름층 표면이라 나무·타일 등 다양한 컬러·패턴 선택 가능 · 대신 물에 약한 편", image: FLOOR_GRANDE_IMG },
       { name: "포세린타일(600×600)", price: "평당 18~25만원", detail: "고급 주거에 많이 시공 · 단단하고 관리가 편한 대신, 접시 등 파손 위험·노약자 낙상 위험 있음 · 국내 난방 특성상 수축·팽창으로 깨질 수 있음", image: FLOOR_TILE_IMG },
       { name: "장판(3.2T)", price: "평당 6~8만원", detail: "물에 강하고 가격이 저렴 · 대신 찍히거나 찢어지기 쉬움", image: FLOOR_VINYL_IMG },
-      { name: "원목마루(지복득마루)", price: "평당 28~45만원", detail: "천연 원목이라 고급스럽고 보행감이 좋음 · 대신 잘 찍혀서 예민하신 분은 피하는 게 좋음", image: FLOOR_WOOD_IMG },
+      { name: "원목마루(지복득마루)", price: "평당 28~45만원", detail: "천연 원목이라 고급스럽고 보행감이 좋음 · 대신 잘 찍혀서 예민하신 분은 피하는 게 좋고, 물에도 약한 편", image: FLOOR_WOOD_IMG },
     ]},
   { id: "kitchen_cabinet", name: "싱크대", icon: UtensilsCrossed, type: "select", question: "싱크대는 어떤 방식으로 할까요?", note: "평수로 추정한 싱크대 길이 × 미터당 단가 · 인조대리석 상판 포함가",
     items: [
