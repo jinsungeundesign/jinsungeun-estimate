@@ -458,7 +458,7 @@ const STEPS = [
     ]},
   { id: "lighting", name: "조명", icon: Lightbulb, type: "select", question: "조명은 어떤 구성으로 할까요?", note: "거실·침실·주방 등 세트 기준",
     items: [
-      { name: "일반 노출조명", price: "60~120만원", image: LIGHTING_EXPOSED_IMG },
+      { name: "일반 노출조명", price: "60~120만원", detail: "기존 조명 자리 그대로 교체하는 기준 · 조명 추가나 스위치 추가는 비용이 추가됨", image: LIGHTING_EXPOSED_IMG },
       { name: "고급 매립조명 + 커튼·가구 간접조명", price: "350~550만원", detail: "천장 매립 다운라이트 + 커튼박스·가구 간접조명 조합", image: LIGHTING_EMBED_IMG },
       { name: "하이엔드 조명", price: "1000만원 이상", detail: "디자인 조명·전 구간 간접조명 설계", image: LIGHTING_HIGHEND_IMG },
     ]},
