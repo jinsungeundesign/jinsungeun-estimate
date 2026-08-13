@@ -367,9 +367,9 @@ const STEPS = [
     items: BATH_TILE_ITEMS.standard },
   { id: "toilet", name: "[욕실] 변기", icon: ShowerHead, type: "multi", question: "변기는 어떤 타입으로 할까요?", note: "물류·시공 별도 기준",
     items: [
-      { name: "이누스 IC 709E", price: "14.8만원", detail: "이누스 · IC 709E 투피스 양변기", image: TOILET_INUS_IMG },
-      { name: "일반 탱크리스양변기", price: "48만원", detail: "퓨로 · BWC101A(디지털 직수형)", image: TOILET_TANKLESS_IMG },
-      { name: "비데일체형 양변기", price: "89만원 이상", detail: "아메리칸스탠다드 · 스탠리 비데일체형", image: TOILET_BIDET_IMG },
+      { name: "이누스 IC 709E", price: "14.8만원", detail: "이누스 · IC 709E 투피스 양변기 · 가성비 좋음, 치마형이라 깔끔하고 관리 편함 · 대신 투피스라 본체와 물탱크 사이에 물때가 낄 수 있음", image: TOILET_INUS_IMG },
+      { name: "일반 탱크리스양변기", price: "48만원", detail: "퓨로 · BWC101A(디지털 직수형) · 베스트셀러 · 물탱크가 없어서 좁은 욕실에도 설치 가능 · 대신 수압이 약한 집은 비추천", image: TOILET_TANKLESS_IMG },
+      { name: "비데일체형 양변기", price: "89만원 이상", detail: "아메리칸스탠다드 · 스탠리 비데일체형 · 고급스럽고 편함 · 대신 비쌈, 비데 관리는 직접 해야 함", image: TOILET_BIDET_IMG },
     ]},
   { id: "upper_cabinet", name: "[욕실] 상부장", icon: ShowerHead, type: "multi", question: "욕실 상부장은 어떻게 할까요?", confidence: "추정치",
     items: [
