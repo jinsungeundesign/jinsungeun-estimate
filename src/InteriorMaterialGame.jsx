@@ -238,14 +238,14 @@ const FAUCET_GROHE_IMG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAkACQAAD/4QC
 // 도배는 컨셉별로 선택지가 달라진다 — 예산/공용부는 항목·이미지 동일, 단가만 차이
 const WALLPAPER_ITEMS = {
   budget: [
-    { name: "실크도배", price: "평당 15~17만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 무몰딩 + 올초배 · 벽지 등급에 따라 단가 차이", image: WALLPAPER_IMG },
-    { name: "디아망", price: "평당 17~19만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 무몰딩 + 올초배 · LX하우시스 디아망 · 동급: 신한벽지 파사드 · 회벽·모던 질감", image: DIAMANT_IMG },
-    { name: "디아망포티스", price: "평당 19~21만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 무몰딩 + 올초배(전체 벽·천장) · LX하우시스 디아망포티스 · 동급: 신한벽지 파사드월가드", image: DIAMANT_FORTIS_IMG2 },
+    { name: "실크도배", price: "평당 15~17만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 공용부 무몰딩 + 올초배 · 벽지 등급에 따라 단가 차이", image: WALLPAPER_IMG },
+    { name: "디아망", price: "평당 17~19만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 공용부 무몰딩 + 올초배 · LX하우시스 디아망 · 동급: 신한벽지 파사드 · 회벽·모던 질감", image: DIAMANT_IMG },
+    { name: "디아망포티스", price: "평당 19~21만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 공용부 무몰딩 + 올초배(전체 벽·천장) · LX하우시스 디아망포티스 · 동급: 신한벽지 파사드월가드", image: DIAMANT_FORTIS_IMG2 },
   ],
   common: [
-    { name: "실크도배", price: "평당 18~20만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 무몰딩 + 올초배 · 거실·주방 등 공용부에 고급 벽지 집중", image: WALLPAPER_IMG },
-    { name: "디아망", price: "평당 20~22만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 무몰딩 + 올초배 · LX하우시스 디아망 · 동급: 신한벽지 파사드 · 회벽·모던 질감", image: DIAMANT_IMG },
-    { name: "디아망포티스", price: "평당 22~24만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 무몰딩 + 올초배(전체 벽·천장) · LX하우시스 디아망포티스 · 동급: 신한벽지 파사드월가드", image: DIAMANT_FORTIS_IMG2 },
+    { name: "실크도배", price: "평당 18~20만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 공용부 무몰딩·무걸레받이·무문선 + 올초배 · 거실·주방 등 공용부에 고급 벽지 집중", image: WALLPAPER_IMG },
+    { name: "디아망", price: "평당 20~22만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 공용부 무몰딩·무걸레받이·무문선 + 올초배 · LX하우시스 디아망 · 동급: 신한벽지 파사드 · 회벽·모던 질감", image: DIAMANT_IMG },
+    { name: "디아망포티스", price: "평당 22~24만원", detail: "현장이 깨끗하고 짐이 없는 노멀한 기준 · 퍼티작업 + 공용부 무몰딩·무걸레받이·무문선 + 올초배(전체 벽·천장) · LX하우시스 디아망포티스 · 동급: 신한벽지 파사드월가드", image: DIAMANT_FORTIS_IMG2 },
   ],
   highend: [
     { name: "전체 도장 마감", price: "평당 60만원 이상", detail: "도배 없이 천장·벽체 전체를 도장으로 마감", image: HIGHEND_PAINT_IMG },
