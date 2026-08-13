@@ -384,7 +384,7 @@ const STEPS = [
     ]},
   { id: "shower_faucet", name: "[욕실] 샤워(욕조)수전", icon: ShowerHead, type: "multi", question: "샤워(욕조)수전은 어떤 방식으로 할까요?", note: "합계단가(자재+시공) 실제 견적 기준",
     items: [
-      { name: "샤워수전(일반형)", price: "7.2~16.5만원", detail: "씨트리 ST-101-NB / 제이바스 J8143 · 베스트셀러 · 구하기 쉽고, 설치·교체가 간편 · 대신 고급스러움은 없음", image: FAUCET_GENERAL_IMG },
+      { name: "샤워수전(일반형)", price: "7.2~16.5만원", detail: "베스트셀러 · 구하기 쉽고, 설치·교체가 간편 · 대신 고급스러움은 없음", image: FAUCET_GENERAL_IMG },
       { name: "매립샤워수전", price: "89~97.9만원", detail: "제이바스 · J80142(무광스테인레스), 조적 필요·매립선반 서비스 제공 · 엄청 고급스럽고 깔끔함, 모두의 로망 · 대신 비싸고, 설비 작업이 필요해 공사 기간이 늘어남", image: FAUCET_EMBED_SHOWER_IMG },
       { name: "매립욕조수전", price: "108.9만원", detail: "제이바스 · J81901T · 엄청 고급스럽고 깔끔함, 모두의 로망 · 대신 비싸고, 설비 작업이 필요해 공사 기간이 늘어남", image: FAUCET_EMBED_TUB_IMG },
     ]},
