@@ -425,13 +425,13 @@ const STEPS = [
     ]},
   { id: "toilet_paper_holder", name: "[욕실] 휴지걸이", icon: ShowerHead, type: "multi", question: "휴지걸이는 어떤 타입으로 할까요?",
     items: [
-      { name: "노출형", price: "5.5만원", detail: "American Standard · 벽 파쇄 없이 부착", image: PAPER_EXPOSED_IMG },
-      { name: "매립형", price: "16만원", detail: "벽 파쇄 포함", image: PAPER_EMBED_IMG },
+      { name: "노출형", price: "5.5만원", detail: "American Standard · 벽 파쇄 없이 부착 · 베스트셀러 · 대신 고급스럽진 못하고, 튀어나와서 변기와 간섭되는 이슈가 많음", image: PAPER_EXPOSED_IMG },
+      { name: "매립형", price: "16만원", detail: "벽 파쇄 포함 · 공간을 차지하지 않아 좋고 고급스러움 · 대신 벽을 파쇄해야 해서 철거가 필요함", image: PAPER_EMBED_IMG },
     ]},
-  { id: "plumbing", name: "난방배관", icon: Wrench, type: "addon", question: "난방배관을 교체하시나요?", note: "㎡당(평당) 자재+시공 기준",
+  { id: "plumbing", name: "난방배관", icon: Wrench, type: "addon", question: "난방배관을 교체하시나요?", note: "㎡당(평당) 자재+시공 기준 · 급수·배수 등 수도공사는 별도",
     items: [
-      { name: "홈파기 난방관 교체", price: "평당 19~23만원", detail: "기존 바닥 유지하며 홈을 파서 배관 교체 · 공사기간 1~2일 · 소음 적음 · 설비·분배기·사다리차·조절기 별도", image: PIPE_HOMEPAGI_IMG },
-      { name: "전체 방통 난방관 교체", price: "평당 35~40만원", detail: "바닥 전체 철거 후 재포설 · 공사기간 4~5일 · 소음 민원 발생 · 양생기간 필요", image: PIPE_BANGTONG_IMG },
+      { name: "홈파기 난방관 교체", price: "평당 19~23만원", detail: "기존 바닥 유지하며 홈을 파서 배관 교체 · 공사기간 1~2일 · 소음 적음 · 설비·분배기·사다리차·조절기 별도 · 수도(급수·배수)공사 별도", image: PIPE_HOMEPAGI_IMG },
+      { name: "전체 방통 난방관 교체", price: "평당 35~40만원", detail: "바닥 전체 철거 후 재포설 · 공사기간 4~5일 · 소음 민원 발생 · 양생기간 필요 · 수도(급수·배수)공사 별도", image: PIPE_BANGTONG_IMG },
     ]},
   { id: "system_ac", name: "시스템에어컨", icon: Wind, type: "addon", question: "시스템에어컨을 설치할까요?", note: "실내기 대수 기준 평균 견적 범위 · 실외기 위치와 현장 난이도에 따라 추가금 발생 · 미포함이면 건너뛰기",
     items: [
