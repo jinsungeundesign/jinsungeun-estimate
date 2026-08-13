@@ -378,9 +378,9 @@ const STEPS = [
     ]},
   { id: "sink", name: "[욕실] 세면대", icon: ShowerHead, type: "multi", question: "세면대는 어떤 타입으로 할까요?", note: "개당 단가",
     items: [
-      { name: "일체형 세면기", price: "13.5~14.9만원", detail: "쿠세라 · CC-3000, 물류·시공별도", image: SINK_UNIT_IMG },
-      { name: "언더볼 세면대", price: "150만원 이상", detail: "인조대리석 상판 기준 · 개당", image: SINK_UNDERMOUNT_IMG },
-      { name: "심리스 세면대", price: "250만원 이상", detail: "하부장 포함 · 사이즈와 설계에 따라 비용이 올라갈 수 있어요", image: SINK_SEAMLESS_IMG },
+      { name: "일체형 세면기", price: "13.5~14.9만원", detail: "쿠세라 · CC-3000, 물류·시공별도 · 베스트셀러 · 유지관리 쉽고 위생적, 구하기 쉬워 공사 기간 단축 · 대신 고급스럽지는 못함", image: SINK_UNIT_IMG },
+      { name: "언더볼 세면대", price: "150만원 이상", detail: "인조대리석 상판 기준 · 개당 · 고급스럽고 디자인이 자유로움 · 대신 상판과 세면기 이음매에 곰팡이 이슈가 있고, 맞춤 제작이라 비싸고 오래 걸림", image: SINK_UNDERMOUNT_IMG },
+      { name: "심리스 세면대", price: "250만원 이상", detail: "하부장 포함 · 사이즈와 설계에 따라 비용이 올라갈 수 있어요 · 언더볼 세면대의 단점을 보완, 위생적인 관리와 고급스러움의 끝판왕 · 대신 비싸고, 제작 기간이 가장 오래 걸리며, 타일과 컬러 맞추기가 어려움", image: SINK_SEAMLESS_IMG },
     ]},
   { id: "shower_faucet", name: "[욕실] 샤워(욕조)수전", icon: ShowerHead, type: "multi", question: "샤워(욕조)수전은 어떤 방식으로 할까요?", note: "합계단가(자재+시공) 실제 견적 기준",
     items: [
