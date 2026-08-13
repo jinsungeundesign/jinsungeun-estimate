@@ -395,7 +395,8 @@ const STEPS = [
       { name: "조적", price: "40~70만원", detail: "유지관리와 고급스러움의 끝판왕 · 대신 두께가 있어 좁은 욕실엔 불가능하고, 가격이 비쌈", confidence: "추정치", image: PARTITION_MASONRY_IMG },
     ]},
   { id: "jendae", name: "[욕실] 젠다이 추가", icon: ShowerHead, type: "multi", optional: true, question: "욕실 젠다이를 추가할까요?", confidence: "추정치",
-    items: [{ name: "젠다이 추가", price: "25~45만원", image: JENDAE_IMG }]},
+    note: "상부장이 수납장(거울장)형이면 세면대에서 세수할 때 머리가 상부장에 부딪힐 수 있어요 · 젠다이로 세면대를 앞으로 빼내면 안전해지고 고급스러워지며, 물건 올려두기 좋고 위생 관리도 편해져요",
+    items: [{ name: "젠다이 추가", price: "25~45만원", detail: "세면대를 앞으로 빼내 상부장과의 충돌 위험을 없애줌 · 고급스러운 느낌 · 물건 올려두기 좋고 위생적인 관리 가능", image: JENDAE_IMG }]},
   { id: "ventilation_fan", name: "[욕실] 환풍기", icon: ShowerHead, type: "multi", question: "욕실 환풍기는 어떤 타입으로 할까요?", note: "물류·시공 별도 기준",
     items: [
       { name: "일반형", price: "4.5만원", detail: "힘펠 · 플렉스(중정압) C2-100LF", image: FAN_GENERAL_IMG },
