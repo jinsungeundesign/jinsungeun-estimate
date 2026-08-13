@@ -352,9 +352,9 @@ const STEPS = [
     ]},
   { id: "front_door_partition", name: "중문", icon: DoorClosed, type: "addon", question: "중문을 설치할까요?", note: "거실·주방 등 집마다 0~2개소 필요할 수 있어요",
     items: [
-      { name: "3연동중문", price: "60~90만원", detail: "실제 시공견적 기준", image: DOOR_TRIPLE_IMG },
-      { name: "고급형중문", price: "135~148.5만원", detail: "천장매립형·슬라이딩·여닫이 등 스타일 선택 가능, 강화유리 기준 · 레일 천장 매립 시 목공 별도", image: DOOR_PREMIUM_IMG },
-      { name: "자동중문", price: "200만원 이상", detail: "레일 천장 매립 시 목공 별도", image: DOOR_AUTO_IMG },
+      { name: "3연동중문", price: "60~90만원", detail: "실제 시공견적 기준 · 가성비 좋음, 좁은 현관에 적합 · 대신 문 상부나 틀 마감이 아쉬워 고급스러움은 떨어짐", image: DOOR_TRIPLE_IMG },
+      { name: "고급형중문", price: "135~148.5만원", detail: "천장매립형·슬라이딩·여닫이 등 스타일 선택 가능, 강화유리 기준 · 레일 천장 매립 시 목공 별도 · 디자인이 예뻐서 추천 · 대신 좁은 현관엔 설치가 어려울 수 있음", image: DOOR_PREMIUM_IMG },
+      { name: "자동중문", price: "200만원 이상", detail: "레일 천장 매립 시 목공 별도 · 편리하고 고급스러움 · 대신 별도 전기 작업이 필요하고 가격이 비쌈", image: DOOR_AUTO_IMG },
     ]},
   { id: "waterproofing", name: "욕실 타일공사", icon: Droplets, type: "multi", question: "욕실 타일공사는 어떻게 할까요?",
     note: "욕실 한 칸 기준 · 타일 + 인건비 + 부자재 + 경비 합계",
