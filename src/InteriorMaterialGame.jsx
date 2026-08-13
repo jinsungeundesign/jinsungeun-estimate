@@ -255,15 +255,15 @@ const WALLPAPER_ITEMS = {
 };
 
 // 욕실 타일공사도 컨셉에 따라 선택지가 달라진다 — 하이엔드는 포세린·유럽산만
-const BATH_TILE_PORCELAIN = { name: "올철거 후 포세린타일", price: "380만원 이상", detail: "포세린타일 600×1200 · 타일 약 75만원 + 떠붙임 인건비 210만원 + 부자재 60~75만원(트렌치·유가 포함) + 경비·식대·운반 35만원", image: BATH_PORCELAIN_IMG };
-const BATH_TILE_DUTBANG = { name: "덧방 시공", price: "100만원 이상", detail: "국산/수입 일반 도기질 300×600·300×300 타일 30~40만원 + 인건비 45만원(1품, 하루 1칸) + 부자재 15~20만원 + 경비·식대·운반 10만원", image: WATERPROOF_PATCH_IMG };
+const BATH_TILE_PORCELAIN = { name: "올철거 후 포세린타일", price: "380만원 이상", detail: "포세린타일 600×1200 · 타일 약 75만원 + 떠붙임 인건비 210만원 + 부자재 60~75만원(트렌치·유가 포함) + 경비·식대·운반 35만원 · 고급 호텔 욕실 느낌, 유지관리 편함, 구조 변경 자유로움 · 대신 공사 기간이 비교적 오래 걸리고 비쌈", image: BATH_PORCELAIN_IMG };
+const BATH_TILE_DUTBANG = { name: "덧방 시공", price: "100만원 이상", detail: "국산/수입 일반 도기질 300×600·300×300 타일 30~40만원 + 인건비 45만원(1품, 하루 1칸) + 부자재 15~20만원 + 경비·식대·운반 10만원 · 저렴하고 공사 기간이 짧음 · 대신 도기질 타일만 가능하고, 욕실이 좁아지며, 구조 변경이 불가능", image: WATERPROOF_PATCH_IMG };
 
 const BATH_TILE_ITEMS = {
   // 예산 중심형은 철거 범위를 최소화하는 컨셉이라 덧방만 제공한다
   budget: [BATH_TILE_DUTBANG],
   standard: [
     BATH_TILE_DUTBANG,
-    { name: "올철거(전면 재시공)", price: "185만원 이상", detail: "기존 타일 올철거 후 재시공 · 인건비 3품", image: WATERPROOF_FULL_IMG },
+    { name: "올철거(전면 재시공)", price: "185만원 이상", detail: "기존 타일 올철거 후 재시공 · 인건비 3품 · 방수까지 새로 해서 안전함, 구축 아파트는 사실상 필수 · 대신 철거 비용·기간이 늘고 민원 리스크가 있음", image: WATERPROOF_FULL_IMG },
     BATH_TILE_PORCELAIN,
   ],
   highend: [
