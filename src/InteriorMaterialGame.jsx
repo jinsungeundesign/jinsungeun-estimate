@@ -404,9 +404,9 @@ const STEPS = [
     ]},
   { id: "ceiling", name: "[욕실] 천장", icon: ShowerHead, type: "multi", question: "욕실 천장은 어떤 마감으로 할까요?",
     items: [
-      { name: "SMC(아치돔)", price: "15~35만원", image: CEILING_SMC_IMG },
-      { name: "목공 후 도장", price: "45~60만원", image: CEILING_WOOD_IMG, imageAlign: "top" },
-      { name: "이노솔", price: "70~90만원", image: CEILING_INOSOL_IMG, imageAlign: "top" },
+      { name: "SMC(아치돔)", price: "15~35만원", detail: "물에 강함 · 베스트셀러 · 무난함 · 대신 구조가 복잡한 경우 비싸지고, 고급스럽진 못함", image: CEILING_SMC_IMG },
+      { name: "목공 후 도장", price: "45~60만원", detail: "하이엔드 현장 욕실 천장의 상징 · 대신 비싸고, 공정이 복잡해 기간이 오래 걸리며, 상대적으로 물에 약한 편", image: CEILING_WOOD_IMG, imageAlign: "top" },
+      { name: "이노솔", price: "70~90만원", detail: "요즘 대세, 가장 깔끔함, 물에 강함 · 대신 내구성 문제가 있고 점검구가 없음", image: CEILING_INOSOL_IMG, imageAlign: "top" },
     ]},
   { id: "basic_lighting", name: "[욕실] 일반조명", icon: ShowerHead, type: "multi", question: "욕실 기본 조명은 어떻게 할까요?", confidence: "추정치",
     items: [
