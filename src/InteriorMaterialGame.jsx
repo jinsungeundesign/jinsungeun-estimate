@@ -399,8 +399,8 @@ const STEPS = [
     items: [{ name: "젠다이 추가", price: "25~45만원", detail: "세면대를 앞으로 빼내 상부장과의 충돌 위험을 없애줌 · 고급스러운 느낌 · 물건 올려두기 좋고 위생적인 관리 가능", image: JENDAE_IMG }]},
   { id: "ventilation_fan", name: "[욕실] 환풍기", icon: ShowerHead, type: "multi", question: "욕실 환풍기는 어떤 타입으로 할까요?", note: "물류·시공 별도 기준",
     items: [
-      { name: "일반형", price: "4.5만원", detail: "힘펠 · 플렉스(중정압) C2-100LF", image: FAN_GENERAL_IMG },
-      { name: "고급형(휴젠뜨)", price: "39.6만원", detail: "힘펠 · 휴젠뜨(온도표시 디지털 컨트롤) · 전기배선 별도", image: FAN_HUZENT_IMG },
+      { name: "일반형", price: "4.5만원", detail: "힘펠 · 플렉스(중정압) C2-100LF · 베스트셀러 · 조용하고 힘이 좋음 · 대신 15층 높이 이상은 힘이 약해짐", image: FAN_GENERAL_IMG },
+      { name: "고급형(휴젠뜨)", price: "39.6만원", detail: "힘펠 · 휴젠뜨(온도표시 디지털 컨트롤) · 전기배선 별도 · 건조·드라이 기능으로 욕실 제습 가능 · 대신 고장 이슈가 있고 비쌈", image: FAN_HUZENT_IMG },
     ]},
   { id: "ceiling", name: "[욕실] 천장", icon: ShowerHead, type: "multi", question: "욕실 천장은 어떤 마감으로 할까요?",
     items: [
