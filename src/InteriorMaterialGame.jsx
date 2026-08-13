@@ -415,8 +415,8 @@ const STEPS = [
     ]},
   { id: "grout", name: "[욕실] 메지", icon: ShowerHead, type: "multi", question: "타일 줄눈(메지)은 어떤 걸로 할까요?",
     items: [
-      { name: "일반메지", price: "15~20만원", detail: "컬러 그라우트", image: GROUT_NORMAL_IMG },
-      { name: "케라폭시", price: "40~55만원", detail: "욕실 바닥만 시공 기준 · 반영구, 내화학성 우수", image: GROUT_KERAPOXY_IMG },
+      { name: "일반메지", price: "15~20만원", detail: "컬러 그라우트 · 타일과 컬러 맞추면 고급스럽고, 시공이 빠름 · 대신 충격이나 수압에 잘 빠지고, 곰팡이 등 유지관리가 어려움", image: GROUT_NORMAL_IMG },
+      { name: "케라폭시", price: "40~55만원", detail: "욕실 바닥만 시공 기준 · 반영구, 내화학성 우수 · 유지관리의 끝판왕, 무광이라 타일과 컬러 맞추면 고급스러움 · 대신 비싸고, 시공이 예민해 3~4일 정도 자리를 비워야 함", image: GROUT_KERAPOXY_IMG },
     ]},
   { id: "towel_bar", name: "[욕실] 수건걸이", icon: ShowerHead, type: "multi", question: "수건걸이는 어떤 브랜드로 할까요?", note: "물류·시공 별도 기준",
     items: [
