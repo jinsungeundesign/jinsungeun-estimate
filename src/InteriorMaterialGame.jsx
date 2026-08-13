@@ -410,8 +410,8 @@ const STEPS = [
     ]},
   { id: "basic_lighting", name: "[욕실] 일반조명", icon: ShowerHead, type: "multi", question: "욕실 기본 조명은 어떻게 할까요?", confidence: "추정치",
     items: [
-      { name: "6인치 조명 2개", price: "6~10만원", image: LIGHT_6INCH_IMG },
-      { name: "1.5인치 + 간접조명 + 상부장 하부간접조명", price: "45~65만원", detail: "매립 다운라이트 + 간접조명 + 상부장 하부 간접조명 조합", image: LIGHT_INDIRECT_IMG },
+      { name: "6인치 조명 2개", price: "6~10만원", detail: "가성비 좋고 밝음 · 대신 빛이 쨍해서 고급스럽지는 못함", image: LIGHT_6INCH_IMG },
+      { name: "1.5인치 + 간접조명 + 상부장 하부간접조명", price: "45~65만원", detail: "매립 다운라이트 + 간접조명 + 상부장 하부 간접조명 조합 · 호텔 같은 고급스러운 분위기, 예쁨 · 대신 공정이 복잡해 비쌈", image: LIGHT_INDIRECT_IMG },
     ]},
   { id: "grout", name: "[욕실] 메지", icon: ShowerHead, type: "multi", question: "타일 줄눈(메지)은 어떤 걸로 할까요?",
     items: [
