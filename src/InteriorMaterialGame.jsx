@@ -452,9 +452,9 @@ const STEPS = [
   { id: "finish_grade", name: "전기·목공·타일·필름", icon: Layers, type: "select", question: "전기·목공·타일·필름은 어떤 등급으로 진행할까요?",
     note: "개별 단가가 불명확해 등급 패키지로 통합",
     items: [
-      { name: "실속형", price: "400~800만원", detail: "전선 유지·목공 최소화·9미리 문선·2계단 몰딩·타일 덧방", image: GRADE_BASIC_IMG },
-      { name: "표준형", price: "1200~2000만원", detail: "신설 전선만 교체 · 공용부만 무몰딩·무문선·무걸레받이 · 발코니 타일은 덧방", image: GRADE_STANDARD_IMG },
-      { name: "프리미엄형", price: "2000만원 이상", detail: "전체 마감재 및 전선 등 재시공 · 특수 조명 및 아트월 등 목공 · 고급마감재 · 일부 벽체 타일 마감", image: GRADE_PREMIUM_IMG },
+      { name: "실속형", price: "평당 16~32만원", detail: "전선 유지·목공 최소화·9미리 문선·2계단 몰딩·타일 덧방", image: GRADE_BASIC_IMG },
+      { name: "표준형", price: "평당 48~88만원", detail: "신설 전선만 교체 · 공용부만 무몰딩·무문선·무걸레받이 · 발코니 타일은 덧방", image: GRADE_STANDARD_IMG },
+      { name: "프리미엄형", price: "평당 120만원 이상", detail: "전체 마감재 및 전선 등 재시공 · 특수 조명 및 아트월 등 목공 · 고급마감재 · 일부 벽체 타일 마감", image: GRADE_PREMIUM_IMG },
     ]},
   { id: "lighting", name: "조명", icon: Lightbulb, type: "select", question: "조명은 어떤 구성으로 할까요?", note: "거실·침실·주방 등 세트 기준",
     items: [
