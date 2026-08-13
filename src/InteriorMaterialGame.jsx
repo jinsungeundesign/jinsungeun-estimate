@@ -390,9 +390,9 @@ const STEPS = [
     ]},
   { id: "shower_partition", name: "[욕실] 샤워파티션", icon: ShowerHead, type: "multi", question: "샤워파티션은 어떤 방식으로 할까요?",
     items: [
-      { name: "기성 유리파티션", price: "7~10만원", detail: "가장 저렴한 프리컷 기성 규격, 스트라이프 필름 등", image: PARTITION_STOCK_GLASS_IMG },
-      { name: "주문제작 유리", price: "25~30만원", image: PARTITION_GLASS_IMG },
-      { name: "조적", price: "40~70만원", confidence: "추정치", image: PARTITION_MASONRY_IMG },
+      { name: "기성 유리파티션", price: "7~10만원", detail: "가장 저렴한 프리컷 기성 규격, 스트라이프 필름 등 · 가성비 좋음, 재고 운영 방식이라 공사 기간 단축 · 대신 맞춤 제작이 아니라 고급스러움은 없고, 유리 특유의 물때 이슈가 있음", image: PARTITION_STOCK_GLASS_IMG },
+      { name: "주문제작 유리", price: "25~30만원", detail: "맞춤 제작이라 디자인이 예쁘고 컬러·재질을 자유롭게 선택 · 대신 정밀 실측과 발주 기간이 필요하고, 유리 특유의 물때 이슈가 있음", image: PARTITION_GLASS_IMG },
+      { name: "조적", price: "40~70만원", detail: "유지관리와 고급스러움의 끝판왕 · 대신 두께가 있어 좁은 욕실엔 불가능하고, 가격이 비쌈", confidence: "추정치", image: PARTITION_MASONRY_IMG },
     ]},
   { id: "jendae", name: "[욕실] 젠다이 추가", icon: ShowerHead, type: "multi", optional: true, question: "욕실 젠다이를 추가할까요?", confidence: "추정치",
     items: [{ name: "젠다이 추가", price: "25~45만원", image: JENDAE_IMG }]},
