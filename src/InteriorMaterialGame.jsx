@@ -1259,6 +1259,16 @@ export default function InteriorMaterialGame() {
   }
 
   function select(item) {
+    // addon(선택 가능) 단계는 이미 고른 항목을 다시 누르면 선택을 취소한다 —
+    // "건너뛰기" 버튼까지 안 가도 바로 다시 누르면 해제되게.
+    if (step.type === "addon" && selections[step.id]?.name === item.name) {
+      setSelections((s) => {
+        const next = { ...s };
+        delete next[step.id];
+        return next;
+      });
+      return;
+    }
     setSelections((s) => ({
       ...s,
       [step.id]: item.perCount ? { ...item, count: defaultPerCount(step.id) } : item,
