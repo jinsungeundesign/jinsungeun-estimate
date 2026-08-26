@@ -1955,7 +1955,8 @@ export default function InteriorMaterialGame() {
           <div className="text-[11px] text-stone-400 mb-3">
             {pyeong}평(전용) · 욕실 {bathroomCount}개 · {profile?.name}
           </div>
-          {codeVerified ? (
+          {/* 회원가입한 사람은 초대 코드 없이도 바로 볼 수 있다 */}
+          {codeVerified || user ? (
           <div className="bg-stone-900 text-white rounded-2xl p-4 mb-3 print-plain print-row">
             <div className="space-y-1.5 pb-3 mb-3 border-b border-white/10">
               <div className="flex items-baseline justify-between text-xs">
@@ -2009,12 +2010,12 @@ export default function InteriorMaterialGame() {
                 value={inviteCodeInput}
                 onChange={(e) => { setInviteCodeInput(e.target.value); setCodeStatus(""); }}
                 placeholder="초대 코드"
-                className="flex-1 bg-white/10 border border-white/15 rounded-full px-3.5 py-2.5 text-sm text-white placeholder:text-stone-500 focus:outline-none focus:border-teal-500"
+                className="min-w-0 flex-1 bg-white/10 border border-white/15 rounded-full px-3.5 py-2.5 text-sm text-white placeholder:text-stone-500 focus:outline-none focus:border-teal-500"
               />
               <button
                 type="submit"
                 disabled={codeStatus === "checking" || !inviteCodeInput.trim()}
-                className="bg-teal-600 text-white text-sm font-medium px-4 rounded-full disabled:opacity-50"
+                className="flex-shrink-0 bg-teal-600 text-white text-sm font-medium px-4 rounded-full disabled:opacity-50"
               >
                 {codeStatus === "checking" ? "확인 중" : "확인"}
               </button>
