@@ -1671,6 +1671,7 @@ export default function InteriorMaterialGame() {
                   <>
                     <Check className="w-3 h-3 inline -mt-0.5 mr-0.5" strokeWidth={3} />
                     선택한 제품이 <span className="font-mono font-semibold">욕실 {bathCount}칸 모두</span>에 똑같이 적용돼요
+                    <span className="text-teal-600"> · 욕실마다 다르게 하고 싶으면 다른 항목을 눌러주세요</span>
                   </>
                 ) : (
                   <>
