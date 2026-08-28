@@ -1631,13 +1631,20 @@ export default function InteriorMaterialGame() {
               </span>
             )}
           </div>
-          <p className="text-xs text-stone-400 mb-5">
+          <p className="text-xs text-stone-400 mb-2">
             {stepNote ? stepNote + " · " : ""}
-            {step.id === "demolition"
-              ? "이 선택이 이후 모든 단계의 기본값이 돼요"
-              : "컨셉 기준 추천값이 미리 선택되어 있어요, 다르면 바꾸세요"}
+            {step.id === "demolition" && "이 선택이 이후 단계의 기본값이 돼요"}
             <span className="text-stone-500"> · 모든 금액은 부가세 별도</span>
           </p>
+          {/* 매 단계 뭔가 골라야 한다는 부담을 줄이려고, 이미 추천값이 선택돼 있다는 걸
+              눈에 띄게 알려준다 — multi 단계는 아래 욕실 배너가 이 역할을 대신한다 */}
+          {step.type !== "multi" && current && (
+            <div className="text-xs bg-teal-50 border border-teal-100 text-teal-800 rounded-lg px-3 py-2 mb-5">
+              <Check className="w-3 h-3 inline -mt-0.5 mr-0.5" strokeWidth={3} />
+              지금 선택: <b>{current.name}</b>{current.count > 1 ? ` ×${current.count}` : ""}
+              <span className="text-teal-600"> · 마음에 들면 바로 다음을 눌러도 돼요</span>
+            </div>
+          )}
           {SINK_STEP_IDS.has(step.id) && sink && (
             <div className="text-xs bg-teal-50 border border-teal-100 text-teal-800 rounded-lg px-3 py-2 mb-5">
               {pyeong}평 기준 싱크대 추정 길이 <span className="font-mono font-semibold">{sink.length}m</span>
@@ -1646,8 +1653,11 @@ export default function InteriorMaterialGame() {
           )}
           {showsBathBanner(step) && (() => {
             const picked = currentMulti.reduce((n, i) => n + (i.count || 1), 0);
-            const matched = picked === bathCount;
+            // 항목 1개만(칸수 조절 없이) 골랐으면 욕실 개수만큼 자동으로 곱해서 총액에 반영된다 —
+            // bathMultiplier()와 같은 조건. 그 사실을 그대로 알려준다.
+            const soloAutoApply = currentMulti.length === 1 && (currentMulti[0].count || 1) === 1 && !step.optional;
             const skipped = picked === 0 && step.optional;
+            const matched = soloAutoApply || picked === bathCount;
             return (
               <div className={
                 "text-xs rounded-lg px-3 py-2 mb-5 border " +
@@ -1655,14 +1665,25 @@ export default function InteriorMaterialGame() {
                   ? "bg-teal-50 border-teal-100 text-teal-800"
                   : "bg-stone-100 border-stone-200 text-stone-600")
               }>
-                선택 <span className="font-mono font-semibold">{picked}칸</span> / 욕실 <span className="font-mono font-semibold">{bathCount}칸</span>
-                {matched
-                  ? " · 다 골랐어요"
-                  : skipped
-                  ? " · 이 항목은 안 하는 걸로 진행돼요"
-                  : items.length === 1
-                  ? " · 칸수를 조절하세요"
-                  : " · 욕실마다 다르게 하려면 여러 개 고르세요"}
+                {skipped ? (
+                  "이 항목은 안 하는 걸로 진행돼요"
+                ) : soloAutoApply ? (
+                  <>
+                    <Check className="w-3 h-3 inline -mt-0.5 mr-0.5" strokeWidth={3} />
+                    선택한 제품이 <span className="font-mono font-semibold">욕실 {bathCount}칸 모두</span>에 똑같이 적용돼요
+                  </>
+                ) : (
+                  <>
+                    선택 <span className="font-mono font-semibold">{picked}칸</span> / 욕실 <span className="font-mono font-semibold">{bathCount}칸</span>
+                    {picked === 0
+                      ? " · 아직 선택하지 않았어요"
+                      : matched
+                      ? " · 욕실마다 다른 제품으로 나눠 적용돼요 · 다 골랐어요"
+                      : items.length === 1
+                      ? " · 칸수를 조절해서 채워주세요"
+                      : ` · 욕실마다 다르게 하려면 ${bathCount - picked}칸 더 골라주세요`}
+                  </>
+                )}
               </div>
             );
           })()}
