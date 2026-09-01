@@ -947,6 +947,15 @@ export default function InteriorMaterialGame() {
   // 상담기록에 남길 요약. 견적 앱과 달리 현장관리는 사장님·직원만 보는 화면이라
   // 자재리스트와 달리 금액을 그대로 넣는다.
   function buildLeadNote() {
+    // 평수 선택 화면에서 바로 상담신청한 경우처럼, 아직 견적을 만들기 전이면
+    // 0평·빈 총액 같은 무의미한 숫자 대신 그 사실 그대로 남긴다.
+    if (!profile) {
+      const lines = ["[견적 앱에서 접수된 문의]", "견적을 만들기 전에 바로 상담 요청함"];
+      if (pyeong) lines.push(`입력한 평수: ${pyeong}평(전용)`);
+      if (inq.startDate) lines.push(`공사 시작 희망일: ${inq.startDate}`);
+      if (inq.moveInDate) lines.push(`입주 예정일: ${inq.moveInDate}`);
+      return lines.join("\n");
+    }
     const lines = [
       "[견적 앱에서 접수된 문의]",
       `${pyeong}평(전용) · 욕실 ${bathCount}개 · ${profile?.name || "-"}`,
@@ -984,11 +993,11 @@ export default function InteriorMaterialGame() {
       start_date: inq.startDate || null,
       move_in_date: inq.moveInDate || null,
       pyeong: pyeong || null,
-      bathroom_count: bathCount,
+      bathroom_count: profile ? bathCount : null,
       profile_id: profile?.id || null,
-      selections: compactSelections(selections),
-      total_low: Math.round(grandLo),
-      total_high: minOnly ? null : Math.round(grandHi),
+      selections: profile ? compactSelections(selections) : null,
+      total_low: profile ? Math.round(grandLo) : null,
+      total_high: profile && !minOnly ? Math.round(grandHi) : null,
       user_id: user?.id || null,
       privacy_agreed: true,
     });
@@ -1581,6 +1590,24 @@ export default function InteriorMaterialGame() {
           >
             다음 <ChevronRight className="w-4 h-4" />
           </button>
+
+          {/* 견적을 끝까지 만들 여유가 없는 분(바쁜 분, 어르신 등)을 위해
+              평수 화면에서부터 바로 상담을 신청할 수 있게 열어둔다 */}
+          <div className="mt-6 pt-6 border-t border-stone-200">
+            <button
+              onClick={() => { setShowInquiry(true); setInqStatus(""); }}
+              className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white text-sm font-medium py-3.5 rounded-full mb-3"
+            >
+              <Send className="w-4 h-4" />
+              고르기 어려우시면 바로 상담신청
+            </button>
+            <a
+              href={COMPANY_TEL_HREF}
+              className="w-full flex items-center justify-center gap-1.5 text-stone-500 text-xs"
+            >
+              또는 <Phone className="w-3.5 h-3.5" /> <span className="font-medium text-stone-700">{COMPANY_TEL}</span>로 전화 주세요
+            </a>
+          </div>
         </div>
       )}
 
@@ -2225,8 +2252,11 @@ export default function InteriorMaterialGame() {
             ) : (
               <form onSubmit={submitInquiry} className="flex-1">
                 <p className="text-sm text-stone-500 leading-relaxed mb-5">
-                  방금 만드신 <b className="text-stone-700">{pyeong}평 · {profile?.name}</b> 견적이
-                  함께 전달됩니다.
+                  {profile ? (
+                    <>방금 만드신 <b className="text-stone-700">{pyeong}평 · {profile.name}</b> 견적이 함께 전달됩니다.</>
+                  ) : (
+                    "견적을 만들지 않고 바로 상담을 신청하셔도 됩니다. 남겨주신 연락처로 상담해 드릴게요."
+                  )}
                 </p>
 
                 <div className="space-y-4">
