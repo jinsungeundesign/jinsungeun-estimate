@@ -475,6 +475,11 @@ const STEPS = [
     ]},
 ];
 
+// "바로 상담신청" 버튼은 초반 선택 단계(철거~중문)까지만 보여준다 — 욕실 항목부터는
+// 세부 선택이 많아 문의 유도가 자꾸 뜨면 영업처럼 느껴질 수 있어 뺀다.
+const INQUIRY_BUTTON_CUTOFF_STEP_ID = "waterproofing";
+const INQUIRY_BUTTON_CUTOFF_INDEX = STEPS.findIndex((s) => s.id === INQUIRY_BUTTON_CUTOFF_STEP_ID);
+
 const PROFILES = [
   { id: "budget", name: "예산 중심형", icon: Wallet, detail: "합리적 자재로 총액 최소화" },
   { id: "common", name: "공용부집중형", icon: Layout, detail: "가성비 무몰딩 디자인, 거실·주방 위주 투자" },
@@ -685,6 +690,25 @@ function KakaoIcon() {
   );
 }
 
+// 견적을 끝까지 만들 여유가 없는 분(바쁜 분, 어르신 등)을 위한 "바로 상담신청" 지름길.
+// 평수입력~중문(초반 선택 단계)까지만 쓰고, 욕실 세부 항목부터는 안 보여준다(INQUIRY_BUTTON_CUTOFF_INDEX 참고).
+function MidInquiryCTA({ onClick }) {
+  return (
+    <div className="mt-6 pt-6 border-t border-stone-200">
+      <button
+        onClick={onClick}
+        className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white text-sm font-medium py-3.5 rounded-full mb-3"
+      >
+        <Send className="w-4 h-4" />
+        고르기 어려우시면 바로 상담신청
+      </button>
+      <a href={COMPANY_TEL_HREF} className="w-full flex items-center justify-center gap-1.5 text-stone-500 text-xs">
+        또는 <Phone className="w-3.5 h-3.5" /> <span className="font-medium text-stone-700">{COMPANY_TEL}</span>로 전화 주세요
+      </a>
+    </div>
+  );
+}
+
 export default function InteriorMaterialGame() {
   const [phase, setPhase] = useState("pyeong");
   const [pyeong, setPyeong] = useState(""); // 항상 전용면적 기준 — 계산은 전부 이 값을 쓴다
@@ -733,6 +757,18 @@ export default function InteriorMaterialGame() {
 
   // 진성은디자인으로 바로 오는 공사문의
   const [showInquiry, setShowInquiry] = useState(false);
+  // 문의창을 열 때 히스토리를 하나 쌓아서, 실수로 열었다가 폰 뒤로가기를 눌러도
+  // 페이지 자체가 나가지지 않고(=선택 내역이 사라지지 않고) 문의창만 닫히게 한다.
+  useEffect(() => {
+    if (!showInquiry) return;
+    window.history.pushState({ inquiry: true }, "");
+    const onPopState = () => setShowInquiry(false);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [showInquiry]);
+  // 문의창을 앱 내 버튼으로 닫을 때도 위에서 쌓은 히스토리를 그대로 소비한다 —
+  // 안 그러면 뒤로가기를 두 번 눌러야 실제로 페이지를 벗어나게 된다.
+  const closeInquiry = () => window.history.back();
   const [inqStatus, setInqStatus] = useState(""); // "", "sending", "sent", "error"
   const [addrOpen, setAddrOpen] = useState(false); // 주소 검색창을 펼친 상태
   const [addrManual, setAddrManual] = useState(false); // 검색이 안 될 때 직접 입력
@@ -1591,23 +1627,7 @@ export default function InteriorMaterialGame() {
             다음 <ChevronRight className="w-4 h-4" />
           </button>
 
-          {/* 견적을 끝까지 만들 여유가 없는 분(바쁜 분, 어르신 등)을 위해
-              평수 화면에서부터 바로 상담을 신청할 수 있게 열어둔다 */}
-          <div className="mt-6 pt-6 border-t border-stone-200">
-            <button
-              onClick={() => { setShowInquiry(true); setInqStatus(""); }}
-              className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white text-sm font-medium py-3.5 rounded-full mb-3"
-            >
-              <Send className="w-4 h-4" />
-              고르기 어려우시면 바로 상담신청
-            </button>
-            <a
-              href={COMPANY_TEL_HREF}
-              className="w-full flex items-center justify-center gap-1.5 text-stone-500 text-xs"
-            >
-              또는 <Phone className="w-3.5 h-3.5" /> <span className="font-medium text-stone-700">{COMPANY_TEL}</span>로 전화 주세요
-            </a>
-          </div>
+          <MidInquiryCTA onClick={() => { setShowInquiry(true); setInqStatus(""); }} />
         </div>
       )}
 
@@ -1645,6 +1665,7 @@ export default function InteriorMaterialGame() {
               다음 <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+          <MidInquiryCTA onClick={() => { setShowInquiry(true); setInqStatus(""); }} />
         </div>
       )}
 
@@ -1944,6 +1965,9 @@ export default function InteriorMaterialGame() {
               </button>
             </div>
           </div>
+          {STEPS.indexOf(step) < INQUIRY_BUTTON_CUTOFF_INDEX && (
+            <MidInquiryCTA onClick={() => { setShowInquiry(true); setInqStatus(""); }} />
+          )}
         </div>
       )}
 
@@ -2215,7 +2239,7 @@ export default function InteriorMaterialGame() {
         <div className="fixed inset-0 bg-stone-50 z-50 overflow-auto no-print">
           <div className="max-w-md mx-auto px-5 py-8 min-h-full flex flex-col">
             <button
-              onClick={() => setShowInquiry(false)}
+              onClick={closeInquiry}
               className="flex items-center gap-1 text-sm text-stone-400 mb-8 self-start"
             >
               <ChevronLeft className="w-4 h-4" /> 견적으로 돌아가기
@@ -2243,7 +2267,7 @@ export default function InteriorMaterialGame() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowInquiry(false)}
+                  onClick={closeInquiry}
                   className="w-full bg-stone-900 text-white text-sm font-medium py-3.5 rounded-full"
                 >
                   견적으로 돌아가기
