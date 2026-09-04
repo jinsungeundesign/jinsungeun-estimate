@@ -587,6 +587,8 @@ const STEP_BY_ID = new Map(STEPS.map((s) => [s.id, s]));
 // 선택 내역은 이름과 개수만 저장한다. 항목 객체를 통째로 저장하면 이미지(base64)까지 들어가
 // 용량이 커지고, 나중에 단가를 고쳐도 저장해둔 옛 금액이 계속 따라다니기 때문.
 const STORAGE_KEY = "jinsungeun-estimate-v1";
+// 한 방문에 한 번만 "들어왔다"를 세기 위한 표식 (탭을 닫으면 사라진다)
+const VISIT_KEY = "jinsungeun-estimate-visit";
 // 초대 코드로 한 번 확인되면 이 브라우저에서는 다시 묻지 않는다
 const CODE_VERIFIED_KEY = "jinsungeun-estimate-code-verified";
 
@@ -819,6 +821,25 @@ export default function InteriorMaterialGame() {
     setRestored(true);
   }, []);
 
+  // 견적 화면에 들어온 사람 수. 평수를 넣기 전에도 세야 하므로 logEstimateEvent와 따로 둔다
+  // (그쪽은 평수·프로필이 있어야만 기록한다).
+  // 한 번 방문에 한 번만 센다 — 새로고침이나 로그인 왕복으로 부풀지 않게 sessionStorage로 막는다.
+  useEffect(() => {
+    if (!supabase) return;
+    try {
+      if (sessionStorage.getItem(VISIT_KEY)) return;
+      sessionStorage.setItem(VISIT_KEY, "1");
+    } catch {
+      // 사파리 비공개 모드 등에서 sessionStorage가 막히면 그냥 기록만 한다
+    }
+    supabase
+      .from("estimate_events")
+      .insert({ event_type: "app_open" })
+      .then(({ error }) => {
+        if (error) console.error("익명 통계 기록 실패(app_open):", error);
+      });
+  }, []);
+
   useEffect(() => {
     if (!restored) return;
     try {
@@ -1008,6 +1029,23 @@ export default function InteriorMaterialGame() {
     return lines.join("\n");
   }
 
+  // 상담신청이 접수되면 현장관리(hyunjang-ops) 쪽 레벨 4+ 직원에게 찐디톡으로
+  // 알림 메시지를 남기고, 웹푸시 구독이 있으면 폰 알림까지 보낸다.
+  // 알림이 실패해도 문의 접수 자체는 이미 끝난 상태이므로 에러는 호출부에서 조용히 무시한다.
+  async function notifyLeadStaff(customerId) {
+    if (!leadsSupabase || !customerId) return;
+    const { data, error } = await leadsSupabase.rpc("notify_leads_staff", { p_customer_id: customerId });
+    if (error) throw error;
+    const staffIds = (data || []).map((r) => r.staff_id).filter(Boolean);
+    await Promise.allSettled(
+      staffIds.map((id) =>
+        leadsSupabase.functions.invoke("send-push", {
+          body: { toUserId: id, title: "[찐디톡] 신규 상담신청", body: "가견적에서 상담신청이 들어왔어요.", url: "/site-check" },
+        })
+      )
+    );
+  }
+
   // 문의 내용을 저장한다. 방금 만든 견적(평수·컨셉·선택항목·총액)이 같이 붙어서
   // 상담 시작부터 무슨 공사인지 다 보인다.
   // 이 앱 자체 기록과는 별개로, 현장관리(hyunjang-ops)의 고객관리 화면에도
@@ -1043,14 +1081,21 @@ export default function InteriorMaterialGame() {
       return;
     }
     if (leadsSupabase) {
-      const { error: leadError } = await leadsSupabase.rpc("create_lead_from_estimate", {
+      const { data: customerId, error: leadError } = await leadsSupabase.rpc("create_lead_from_estimate", {
         p_name: inq.name.trim() || null,
         p_phone: inq.phone.trim(),
         p_address: fullAddress,
         p_note: buildLeadNote(),
       });
-      if (leadError) console.error("잠재고객 등록 실패(문의 접수는 정상):", leadError);
+      if (leadError) {
+        console.error("잠재고객 등록 실패(문의 접수는 정상):", leadError);
+      } else {
+        notifyLeadStaff(customerId).catch((e) => console.error("직원 알림 실패(문의 접수는 정상):", e));
+      }
     }
+    // 통계에서 "버튼 클릭 → 상담 신청"까지 한 줄로 보기 위한 익명 기록.
+    // inquiries 표에는 연락처가 들어 있어 통계 화면에서 열어볼 수 없으므로 여기에 따로 남긴다.
+    logEstimateEvent("inquiry_submit");
     setInqStatus("sent");
   }
 
