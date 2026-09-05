@@ -1095,7 +1095,7 @@ export default function InteriorMaterialGame() {
     }
     // 통계에서 "버튼 클릭 → 상담 신청"까지 한 줄로 보기 위한 익명 기록.
     // inquiries 표에는 연락처가 들어 있어 통계 화면에서 열어볼 수 없으므로 여기에 따로 남긴다.
-    logEstimateEvent("inquiry_submit");
+    logEstimateEvent("inquiry_submit", { requireProfile: false });
     setInqStatus("sent");
   }
 
@@ -1476,16 +1476,20 @@ export default function InteriorMaterialGame() {
   // 현장관리 쪽에서 각 버튼이 실제로 얼마나 쓰이는지(전환 현황) 볼 수 있게 한다.
   // 자재 선택 비율 집계는 summary_view 한 종류만 세므로, 한 사람이 여러 버튼을
   // 눌러도 자재 통계가 중복으로 부풀지 않는다.
-  function logEstimateEvent(eventType) {
-    if (!supabase || !pyeong || !profile) return;
+  // requireProfile=false로 부르면 평수·컨셉을 아직 안 정했어도(예: 평수 화면에서 바로
+  // 상담신청) 기록한다 — inquiry_submit은 견적을 끝까지 안 만들고도 낼 수 있는 신청이라
+  // 다른 퍼널 이벤트(cta_click·summary_view 등)와 달리 이 조건을 강제하면 안 된다.
+  function logEstimateEvent(eventType, { requireProfile = true } = {}) {
+    if (!supabase) return;
+    if (requireProfile && (!pyeong || !profile)) return;
     supabase
       .from("estimate_events")
       .insert({
         event_type: eventType,
         pyeong: Number(pyeong) || null,
         bathroom_count: Number(bathroomCount) || null,
-        profile_id: profile.id,
-        selections: compactSelections(selections),
+        profile_id: profile?.id || null,
+        selections: profile ? compactSelections(selections) : null,
         // 누구인지는 담지 않고 로그인 여부만 — 회원/비회원 이용 비율을 보려는 용도
         is_member: !!user,
       })
