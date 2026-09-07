@@ -286,7 +286,9 @@ const STEPS = [
           "욕실은 기구만 철거(개소당 48~95만원)", "폐기물 1톤트럭 3회(회당 60만원)"] },
       { name: "공용부 집중형", profileId: "common", price: "평당 25~32만원", summary: "예산중심형 포함 +",
         image: COMMON_TIER_IMG,
-        includes: ["욕실 타일철거 후 방수", "욕실 수도·배수배관 위치이동", "주방 설비이동 3m 이하", "현관 바닥타일 철거"] },
+        includes: [
+          "욕실 타일철거 후 방수", "욕실 수도·배수배관 위치이동", "주방 설비이동 3m 이하", "현관 바닥타일 철거",
+          "욕실 급수·배수배관 교체 + 욕실 바닥 미장 + 욕실 도막방수 포함 (욕실 수만큼 반영)"] },
       { name: "하이엔드 마감", profileId: "highend", price: "2000만원 이상", summary: "공용부집중형 포함 +",
         image: HIGHEND_TIER_IMG,
         includes: ["천장 전체철거", "벽체 전체철거", "기존 전선 모두 교체", "발코니 바닥타일 철거 후 방수", "세탁 설비이동"] },
@@ -301,9 +303,9 @@ const STEPS = [
     ]},
   { id: "balcony_extension", name: "발코니확장", icon: Expand, type: "multi", question: "발코니 확장이 필요한 곳이 있나요?", note: "순정 공사비(창호·마감 제외) 기준 · 여러 곳 중복선택 가능",
     items: [
-      { name: "발코니 확장 (특수 열교차단 공법)", price: "450~550만원", detail: "외기 접합부 열교를 차단하는 FM 시공 — 결로·곰팡이 방지 (일반 확장과 다른 프리미엄 방식) · 순정 확장(창호·마감 제외) 실측 견적 기준", image: EXT_LIVING_IMG },
-      { name: "주방", price: "200~280만원", detail: "순정 확장(창호·마감 제외) 실측 견적 기준", image: EXT_KITCHEN_IMG },
-      { name: "방", price: "200~280만원", perCount: true, detail: "순정 확장(창호·마감 제외) 실측 견적 기준, 방마다 개수 선택", image: EXT_ROOM_IMG },
+      { name: "발코니 확장 (특수 열교차단 공법) — 거실", price: "400~500만원", detail: "외기 접합부의 열교(냉교)를 차단하는 FM 시공. 결로·곰팡이를 막는 프리미엄 방식으로 일반 확장과 다릅니다. · 순정 확장(창호·마감 제외) 실측 견적 기준", image: EXT_LIVING_IMG },
+      { name: "발코니 확장 (특수 열교차단 공법) — 주방", price: "400~500만원", detail: "외기 접합부의 열교(냉교)를 차단하는 FM 시공. 결로·곰팡이를 막는 프리미엄 방식으로 일반 확장과 다릅니다. · 순정 확장(창호·마감 제외) 실측 견적 기준", image: EXT_KITCHEN_IMG },
+      { name: "발코니 확장 (특수 열교차단 공법) — 작은방", price: "320~420만원", perCount: true, detail: "외기 접합부의 열교(냉교)를 차단하는 FM 시공. 결로·곰팡이를 막는 프리미엄 방식으로 일반 확장과 다릅니다. · 순정 확장(창호·마감 제외) 실측 견적 기준, 방마다 개수 선택", image: EXT_ROOM_IMG },
     ]},
   // 발코니 확장을 하나도 안 하면 행위허가 자체가 필요 없으므로 단계를 건너뛴다
   { id: "permit_fee", name: "행위허가/행정신고비", icon: Layers, type: "select", question: "발코니 확장 관련 행위허가·행정신고비는 어떻게 잡을까요?", note: "실제 견적 기준",
@@ -503,6 +505,15 @@ function profitRateFor(subtotal) {
 
 // 욕실 기구(변기·세면대·수전 등) 설치비 — 선택 항목이 아니라 욕실 개수만큼 견적에 자동 반영
 const BATH_FIXTURE_INSTALL = { name: "욕실 기구 설치비", perRoom: 30, detail: "변기·세면대·수전 등 설치비 · 욕실 1칸당 30만원" };
+
+// 공용부집중형 이상(하이엔드 포함)은 철거 단계에 욕실 급수·배수배관 교체 + 바닥 미장 +
+// 도막방수까지 포함된다. 예산 중심형은 "욕실은 기구만 철거" 범위라 해당 없음.
+// 평당 단가에 섞으면 평수에 따라 잘못 스케일되므로, 욕실 개수 기준 별도 항목으로 더한다.
+const BATH_DEMOLITION_FOLLOWUP = {
+  name: "욕실 급수·배수배관 교체 + 바닥 미장 + 도막방수",
+  perRoom: 77 + 49.5 + 37.95 + 58.5, // 급수 77 + 배수 49.5 + 바닥미장 37.95 + 도막방수 58.5 (만원)
+  detail: "급수배관 교체 77만원 + 배수배관 교체 49.5만원 + 욕실 바닥 미장 37.95만원 + 도막방수(일반 5㎡) 58.5만원 · 욕실 1칸당 합계",
+};
 
 const BATHROOM_STEP_IDS = new Set([
   "waterproofing", "toilet", "upper_cabinet", "sink", "shower_faucet",
@@ -1545,6 +1556,12 @@ export default function InteriorMaterialGame() {
   totalLo += bathInstallTotal;
   totalHi += bathInstallTotal;
 
+  // 공용부집중형 이상(예산 중심형 제외)은 욕실 급수·배수배관 교체+바닥 미장+도막방수가
+  // 철거 범위에 포함되므로 욕실 개수만큼 더한다
+  const bathDemoFollowupTotal = profile && profile.id !== "budget" ? BATH_DEMOLITION_FOLLOWUP.perRoom * bathCount : 0;
+  totalLo += bathDemoFollowupTotal;
+  totalHi += bathDemoFollowupTotal;
+
   // 공사비 소계에 기업이윤을 할증해 최종 견적을 만든다
   // 하한·상한이 서로 다른 구간에 걸칠 수 있어 각각의 요율을 적용한다
   const rateLo = profitRateFor(totalLo);
@@ -2174,6 +2191,19 @@ export default function InteriorMaterialGame() {
               </div>
               <div className="text-xs font-mono text-teal-700">{bathInstallTotal}만원</div>
             </div>
+            {bathDemoFollowupTotal > 0 && (
+              <div className="flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-stone-100">
+                <div>
+                  <div className="text-[10px] text-stone-400">철거(공용부 집중형 이상) 기본 포함</div>
+                  <div className="text-sm font-medium">
+                    {BATH_DEMOLITION_FOLLOWUP.name}
+                    {bathCount > 1 ? ` (욕실 ${bathCount}개 반영)` : ""}
+                  </div>
+                  <div className="text-[10px] text-stone-400 mt-0.5">{BATH_DEMOLITION_FOLLOWUP.detail}</div>
+                </div>
+                <div className="text-xs font-mono text-teal-700">{won(bathDemoFollowupTotal)}만원</div>
+              </div>
+            )}
           </div>
 
           {/* PDF에만 들어가는 꼬리말 — 저장한 견적서를 나중에 다시 볼 때 연락처가 남아 있게 한다 */}
