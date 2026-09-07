@@ -339,7 +339,7 @@ const STEPS = [
     items: [
       { name: "인조대리석(하이막스)", price: "추가비용 없음", detail: "싱크대 기본 사양 · 베스트셀러 · 이음매 안 보이게 시공 가능 · 다양한 컬러 · 솔리드 소재라 갈아내면서 쓰면 새것처럼 복원 가능 · 대신 기스가 잘 나고, 뜨거운 것 올리면 깨지기 쉬우며, 기스에 오염물이 낄 수 있고, 인조대리석 티가 남", image: COUNTER_MARBLE_IMG },
       { name: "엔지니어드스톤(칸스톤)", price: "M당 35만원", unit: "sink_m", detail: "인조대리석 대비 추가금 · 가공·물류·시공비 포함 · 인조대리석의 단점을 보완해 기스·파손에 강함 · 대신 이음매는 실리콘 처리, 가격대가 애매함", image: COUNTER_ENGSTONE_IMG },
-      { name: "세라믹", price: "M당 60만원", unit: "sink_m", detail: "인조대리석 대비 추가금 · 가장 예쁘고 위생적, 경도가 우수해 기스가 안 나고 뜨거운 냄비를 올려도 됨 · 대신 이음매 티가 나고, 무거운 냄비로 세게 치면 깨질 수 있으며, 비쌈", confidence: "추정치", image: COUNTER_CERAMIC_IMG },
+      { name: "세라믹", price: "1장 385만원부터", unit: "ceramic_slab", slabCoverageM: 3, slabBasePrice: 385, slabAddPrice: 95, detail: "자재 132만원 + 시공 253만원(1장 기준) · 추가 1장당 95만원(3m 초과 시) · 인조대리석 대비 추가금 · 가장 예쁘고 위생적, 경도가 우수해 기스가 안 나고 뜨거운 냄비를 올려도 됨 · 대신 이음매 티가 나고, 무거운 냄비로 세게 치면 깨질 수 있으며, 비쌈", image: COUNTER_CERAMIC_IMG },
     ]},
   { id: "sink_bowl", name: "싱크볼", icon: UtensilsCrossed, type: "select", question: "싱크볼은 무엇으로 할까요?", note: "제품 판매가 기준 · 설치비 별도",
     items: [
@@ -558,7 +558,27 @@ function sinkLengthFor(pyeong) {
 }
 
 // 단가 항목(미터당 등)은 추정 수량을 곱해 실제 금액으로 환산해서 보여준다
+// 세라믹 상판처럼 "규격 장 단위로 끊어 시공"하는 자재의 필요 장수 —
+// 싱크대 길이를 장당 커버 길이로 나눠 올림한다 (최소 1장)
+function slabCountFor(item, sinkLength) {
+  return Math.max(1, Math.ceil((sinkLength || 0) / item.slabCoverageM));
+}
+
 function priceInfo(item, ctx) {
+  // 세라믹 상판: 1장 기본가(자재+시공) + 추가 장당 가산 — 미터당 단가로는 표현이 안 돼서 따로 계산한다
+  if (item.unit === "ceramic_slab") {
+    const slabs = slabCountFor(item, ctx.sinkLength);
+    const total = item.slabBasePrice + (slabs - 1) * item.slabAddPrice;
+    const fmt = (n) => Math.round(n).toLocaleString();
+    const addPart = slabs > 1 ? ` + 추가 ${slabs - 1}장 × ${fmt(item.slabAddPrice)}만원` : "";
+    return {
+      label: `${fmt(total)}만원`,
+      sub: `1장 ${fmt(item.slabBasePrice)}만원${addPart} · 총 ${slabs}장(싱크대 ${ctx.sinkLength}m 기준, ${item.slabCoverageM}m당 1장)`,
+      lo: total,
+      hi: total,
+    };
+  }
+
   const base = parsePrice(item.price);
   if (!base) return { label: item.price, lo: null, hi: null };
 
@@ -1176,7 +1196,9 @@ export default function InteriorMaterialGame() {
       }
 
       // 어떤 수량 기준으로 견적을 내야 하는지 명시
-      if (item.unit === "sink_m" && sink) {
+      if (item.unit === "ceramic_slab" && sink) {
+        lines.push(`   · 산정 기준: 싱크대 길이 ${sink.length}m 기준 ${slabCountFor(item, sink.length)}장(${item.slabCoverageM}m당 1장)`);
+      } else if (item.unit === "sink_m" && sink) {
         lines.push(`   · 산정 기준: 싱크대 길이 ${sink.length}m`);
       } else if (/평당/.test(item.price || "")) {
         lines.push(`   · 산정 기준: 전용면적 ${pyeong}평`);
