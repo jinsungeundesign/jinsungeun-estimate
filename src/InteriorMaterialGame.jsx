@@ -1106,7 +1106,10 @@ export default function InteriorMaterialGame() {
     }
     // 통계에서 "버튼 클릭 → 상담 신청"까지 한 줄로 보기 위한 익명 기록.
     // inquiries 표에는 연락처가 들어 있어 통계 화면에서 열어볼 수 없으므로 여기에 따로 남긴다.
-    logEstimateEvent("inquiry_submit", { requireProfile: false });
+    // 평수 화면에서 견적 없이 바로 상담신청한 경우(profile 없음)는 깔때기의 중간 단계를
+    // 다 건너뛰고 온 것이라 같은 항목으로 합치면 "결과 화면까지 봄"보다 "상담 신청"이
+    // 더 많아 보이는 착시가 생긴다. 그래서 따로 구분해서 남긴다.
+    logEstimateEvent(profile ? "inquiry_submit" : "quick_consult", { requireProfile: false });
     setInqStatus("sent");
   }
 
