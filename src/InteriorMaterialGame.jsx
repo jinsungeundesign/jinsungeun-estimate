@@ -338,7 +338,7 @@ const STEPS = [
   { id: "kitchen_countertop", name: "싱크대상판", icon: LayoutGrid, type: "select", question: "싱크대 상판은 어떤 소재로 할까요?", note: "싱크대 본체와 별도로, 상판 소재별 미터당 단가로 계산돼요",
     items: [
       { name: "인조대리석(퓨어화이트)", price: "M당 35만원", unit: "sink_m", detail: "베스트셀러 · 이음매 안 보이게 시공 가능 · 다양한 컬러 · 솔리드 소재라 갈아내면서 쓰면 새것처럼 복원 가능 · 대신 기스가 잘 나고, 뜨거운 것 올리면 깨지기 쉬우며, 기스에 오염물이 낄 수 있고, 인조대리석 티가 남", image: COUNTER_MARBLE_IMG },
-      { name: "엔지니어드스톤(칸스톤)", price: "M당 35만원", unit: "sink_m", detail: "가공·물류·시공비 포함 · 인조대리석의 단점을 보완해 기스·파손에 강함 · 대신 이음매는 실리콘 처리, 가격대가 애매함", image: COUNTER_ENGSTONE_IMG },
+      { name: "엔지니어드스톤(칸스톤)", price: "M당 70만원", unit: "sink_m", detail: "가공·물류·시공비 포함 · 인조대리석의 단점을 보완해 기스·파손에 강함 · 대신 이음매는 실리콘 처리, 가격대가 애매함", image: COUNTER_ENGSTONE_IMG },
       { name: "세라믹", price: "1장 385만원부터", unit: "ceramic_slab", slabCoverageM: 3, slabMaterialPerSlab: 132, slabLaborBase: 253, slabLaborAdd: 90, detail: "자재 132만원/장 + 시공 253만원(1장 기준, 추가 장당 90만원) · 가장 예쁘고 위생적, 경도가 우수해 기스가 안 나고 뜨거운 냄비를 올려도 됨 · 대신 이음매 티가 나고, 무거운 냄비로 세게 치면 깨질 수 있으며, 비쌈", image: COUNTER_CERAMIC_IMG },
     ]},
   { id: "sink_bowl", name: "싱크볼", icon: UtensilsCrossed, type: "select", question: "싱크볼은 무엇으로 할까요?", note: "제품 판매가 기준 · 설치비 별도",
