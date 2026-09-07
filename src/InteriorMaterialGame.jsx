@@ -301,7 +301,7 @@ const STEPS = [
     ]},
   { id: "balcony_extension", name: "발코니확장", icon: Expand, type: "multi", question: "발코니 확장이 필요한 곳이 있나요?", note: "순정 공사비(창호·마감 제외) 기준 · 여러 곳 중복선택 가능",
     items: [
-      { name: "거실", price: "250~330만원", detail: "순정 확장(창호·마감 제외) 실측 견적 기준", image: EXT_LIVING_IMG },
+      { name: "발코니 확장 (특수 열교차단 공법)", price: "450~550만원", detail: "외기 접합부 열교를 차단하는 FM 시공 — 결로·곰팡이 방지 (일반 확장과 다른 프리미엄 방식) · 순정 확장(창호·마감 제외) 실측 견적 기준", image: EXT_LIVING_IMG },
       { name: "주방", price: "200~280만원", detail: "순정 확장(창호·마감 제외) 실측 견적 기준", image: EXT_KITCHEN_IMG },
       { name: "방", price: "200~280만원", perCount: true, detail: "순정 확장(창호·마감 제외) 실측 견적 기준, 방마다 개수 선택", image: EXT_ROOM_IMG },
     ]},
