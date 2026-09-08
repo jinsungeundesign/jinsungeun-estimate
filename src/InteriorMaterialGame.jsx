@@ -625,6 +625,10 @@ const STORAGE_KEY = "jinsungeun-estimate-v1";
 const VISIT_KEY = "jinsungeun-estimate-visit";
 // 초대 코드로 한 번 확인되면 이 브라우저에서는 다시 묻지 않는다
 const CODE_VERIFIED_KEY = "jinsungeun-estimate-code-verified";
+// 직원 모드로 한 번 들어오면(?staff=staff-mode) 이 기기에서 계속 유지된다
+const STAFF_MODE_KEY = "jinsungeun-estimate-staff-mode";
+// 직원 모드에서 보낸 견적을 받는 현장관리 앱 주소
+const HYUNJANG_OPS_URL = "https://hyunjang-ops.vercel.app";
 
 // 단계 안내문에는 앱 사용자에게 하는 말("건너뛰기", "추천값이 미리 선택")과
 // 내부 사정("개별 단가가 불명확해 등급으로 통합")이 섞여 있다.
@@ -775,6 +779,47 @@ export default function InteriorMaterialGame() {
   const [inviteCodeInput, setInviteCodeInput] = useState("");
   const [codeStatus, setCodeStatus] = useState(""); // "", "checking", "error"
 
+  // 직원 모드 — ?staff=staff-mode로 한 번 들어오면 이 기기에서 계속 유지된다.
+  // 직원이 시연·테스트로 쓰는 견적은 통계에 안 잡히고, 상세견적(현장관리 앱)으로 바로 보낼 수 있다.
+  const [staffMode] = useState(() => {
+    try {
+      if (typeof window === "undefined") return false;
+      if (new URLSearchParams(window.location.search).get("staff") === "staff-mode") {
+        localStorage.setItem(STAFF_MODE_KEY, "1");
+        return true;
+      }
+      return localStorage.getItem(STAFF_MODE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [staffSendStatus, setStaffSendStatus] = useState(""); // "", "sending", "error"
+
+  // 직원 모드에서 만든 견적을 상세견적(현장관리 앱)으로 넘긴다.
+  // 고객 상담기록·알림은 전혀 안 남고, 현장관리의 "직원 대기열"에만 쌓인다.
+  async function sendToDetailedQuote() {
+    if (!leadsSupabase || !profile) return;
+    setStaffSendStatus("sending");
+    // 새 탭은 클릭한 순간(비동기 호출 전) 미리 열어둔다 — await 이후에 열면
+    // "사용자 조작으로 연 게 아니다"라고 보고 브라우저가 팝업을 막는 경우가 있다.
+    const newTab = window.open("", "_blank");
+    const label = `${pyeong}평·욕실${bathCount}·${profile.name}`;
+    const { data: draftId, error } = await leadsSupabase.rpc("submit_staff_estimate", {
+      p_memo: buildLeadNote(),
+      p_label: label,
+    });
+    if (error || !draftId) {
+      console.error("상세견적 전달 실패:", error);
+      setStaffSendStatus("error");
+      newTab?.close();
+      return;
+    }
+    setStaffSendStatus("");
+    const url = `${HYUNJANG_OPS_URL}/estimate-import?draft=${draftId}`;
+    if (newTab) newTab.location.href = url;
+    else window.open(url, "_blank"); // 미리 열기가 막혔다면 마지막으로 한 번 더 시도
+  }
+
   async function verifyInviteCode(e) {
     e?.preventDefault();
     if (!supabase || !inviteCodeInput.trim()) return;
@@ -859,7 +904,7 @@ export default function InteriorMaterialGame() {
   // (그쪽은 평수·프로필이 있어야만 기록한다).
   // 한 번 방문에 한 번만 센다 — 새로고침이나 로그인 왕복으로 부풀지 않게 sessionStorage로 막는다.
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase || staffMode) return;
     try {
       if (sessionStorage.getItem(VISIT_KEY)) return;
       sessionStorage.setItem(VISIT_KEY, "1");
@@ -1519,7 +1564,7 @@ export default function InteriorMaterialGame() {
   // 상담신청) 기록한다 — inquiry_submit은 견적을 끝까지 안 만들고도 낼 수 있는 신청이라
   // 다른 퍼널 이벤트(cta_click·summary_view 등)와 달리 이 조건을 강제하면 안 된다.
   function logEstimateEvent(eventType, { requireProfile = true } = {}) {
-    if (!supabase) return;
+    if (!supabase || staffMode) return;
     if (requireProfile && (!pyeong || !profile)) return;
     supabase
       .from("estimate_events")
@@ -1624,6 +1669,11 @@ export default function InteriorMaterialGame() {
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 flex flex-col max-w-md mx-auto print-sheet">
+      {staffMode && (
+        <div className="no-print fixed top-2 right-2 z-[70] bg-stone-900 text-white text-[11px] font-medium px-2.5 py-1 rounded-full shadow-lg">
+          🔧 직원 모드
+        </div>
+      )}
       {/* 슬림 상단바 */}
       {phase !== "pyeong" && (
         <div className="px-5 pt-5 pb-3">
@@ -2246,6 +2296,20 @@ export default function InteriorMaterialGame() {
           {/* 로그인 여부와 상관없이 같은 버튼을 보여준다.
               로그인이 안 되어 있으면 누르는 순간 로그인 화면으로 넘어간다. */}
           <div className="space-y-2 no-print">
+              {staffMode && (
+                <button
+                  onClick={sendToDetailedQuote}
+                  disabled={staffSendStatus === "sending"}
+                  className="w-full flex items-center justify-center gap-2 bg-amber-500 text-white text-sm font-medium py-3.5 rounded-full disabled:opacity-60"
+                >
+                  🔧
+                  {staffSendStatus === "sending"
+                    ? "전달 중..."
+                    : staffSendStatus === "error"
+                    ? "전달 실패 · 다시 시도"
+                    : "상세견적으로 보내기"}
+                </button>
+              )}
               <button
                 onClick={saveEstimateLink}
                 disabled={saveStatus === "saving"}
